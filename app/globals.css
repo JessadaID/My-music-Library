@@ -1,14 +1,4 @@
+/* inline theme config จุดนี้ใน globals.css จะผูกตัวแปรกับ Tailwind utility */
 @import "tailwindcss";
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-@layer base {
-  body {
-    @apply bg-white text-black; /* Light mode default */
-  }
-
-  .dark body {
-    @apply bg-black text-white; /* Dark mode styles */
-  }
-}
+@custom-variant dark (&:where(.dark, .dark *));
