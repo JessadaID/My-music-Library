@@ -1,4 +1,6 @@
 import Addsong from "./component/Addsong";
+import TransImg from "./component/transImg";
+
 export default function Home() {
   return (
     <div>
@@ -10,7 +12,7 @@ export default function Home() {
             <Addsong />
           </div>
           <div className="col-span-1 flex justify-center items-center">
-            <img src="./y/y-2.jfif" alt="" width={300}/>
+            <TransImg />
           </div>
         </div>
       </section>

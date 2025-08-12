@@ -25,6 +25,7 @@ export default function Addsong() {
   const songsRef = useRef<Song[]>([]);
   const currentRef = useRef(0);
 
+  const [showAddsong, setShowAddsong] = useState(false); //แสดง modal เมื่อกดปุ่มเพิ่มเพลง
   // Update refs เมื่อ state เปลี่ยน
   useEffect(() => {
     songsRef.current = songs;
@@ -269,8 +270,8 @@ export default function Addsong() {
     "https://static.standard.co.uk/s3fs-public/thumbnails/image/2019/03/05/11/sei26139543-1-0.jpg?quality=75&auto=webp&width=960"; // Default album art
 
   return (
-    <div className="p-6 grid gap-6 bg-gray-100 dark:bg-gray-900 shadow-md grid-cols-3 h-full">
-      <section>
+    <div className="p-4 grid gap-6 bg-gray-100 dark:bg-gray-900 shadow-md grid-cols-3 h-full">
+      <section >
         <div className="col-span-1 flex items-center justify-center">
           <PixelImage src={albumArt} />
         </div>
@@ -290,7 +291,7 @@ export default function Addsong() {
             <span className="min-w-12">{formatTime(duration)}</span>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 mt-4 justify-center">
             <button
               onClick={prevSong}
               className="px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-600 font-medium"
@@ -327,9 +328,12 @@ export default function Addsong() {
         </div>
       </section>
 
-      <section className="col-span-2">
+      <section className="col-span-2 relative">
         {/* Add Song */}
-        <div className="flex gap-2 mb-4">
+        <button onClick={()=>{setShowAddsong(!showAddsong)}} className="py-1 px-2 bg-emerald-500 rounded-sm hover:bg-emerald-600 absolute top-1 right-1">
+          Addsong +
+        </button>
+        <div className={showAddsong ? "block flex gap-2 mb-4" : "hidden"}>
           <input
             type="text"
             id="urlInput"
@@ -370,17 +374,16 @@ export default function Addsong() {
         </div>
 
         {/* Playlist */}
-        {songs.length > 0 && (
-          <div className="mb-6">
+          <div className="">
             <h2 className="text-xl font-semibold mb-2">Playlist</h2>
-            <ul className="space-y-1">
+            <ul className={showAddsong ? "space-y-1 h-[320] overflow-y-auto overflow-x-hidden" : "space-y-1 h-[375] overflow-y-auto overflow-x-hidden"}>
               {songs.map((song, idx) => (
                 <li
                   key={idx}
                   className={`flex items-center gap-3 p-3 rounded cursor-pointer transition-colors ${
                     idx === current
                       ? "bg-green-700 border-l-4 border-green-400"
-                      : "bg-gray-700 hover:bg-gray-600"
+                      : "bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-800"
                   }`}
                   onClick={() => playSong(idx)}
                 >
@@ -395,13 +398,14 @@ export default function Addsong() {
               ))}
             </ul>
           </div>
-        )}
       </section>
 
       <section>
         {/* Hidden Player */}
         <div id="player" style={{ display: "none" }}></div>
       </section>
+
+      
     </div>
   );
 }
