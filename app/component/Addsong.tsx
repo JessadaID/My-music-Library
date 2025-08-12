@@ -1,6 +1,7 @@
 "use client";
-import Image from "next/image";
 import { useEffect, useRef, useState, useCallback } from "react";
+import PixelImage from "./PixelImage";
+import Image from "next/image";
 
 interface Song {
   id: string;
@@ -27,6 +28,7 @@ export default function Addsong() {
   // Update refs เมื่อ state เปลี่ยน
   useEffect(() => {
     songsRef.current = songs;
+    console.log(songs)
   }, [songs]);
 
   useEffect(() => {
@@ -169,7 +171,7 @@ export default function Addsong() {
         `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`
       );
       const data = await res.json();
-
+      console.log(data)
       const newSong: Song = {
         id,
         title: data.title,
@@ -265,27 +267,12 @@ export default function Addsong() {
   const albumArt =
     songs[current]?.thumbnail ||
     "https://static.standard.co.uk/s3fs-public/thumbnails/image/2019/03/05/11/sei26139543-1-0.jpg?quality=75&auto=webp&width=960"; // Default album art
-  const spinClass = isPlaying ? "animate-spin" : "";
 
   return (
-    <div className="p-6 grid gap-6 bg-gray-100 dark:bg-gray-900 rounded-lg shadow-md grid-cols-3">
+    <div className="p-6 grid gap-6 bg-gray-100 dark:bg-gray-900 shadow-md grid-cols-3 h-full">
       <section>
         <div className="col-span-1 flex items-center justify-center">
-          <div className="relative w-72 h-72">
-            {/* Vinyl Disc */}
-            <div
-              className={`w-full h-full bg-black rounded-full ${spinClass} [animation-duration:8s] flex items-center justify-center shadow-2xl`}
-            >
-              {/* Album Art Label */}
-              <img
-                src={albumArt}
-                alt={songs[current]?.title || "Album Art"}
-                className="w-40 h-40 rounded-full object-cover"
-              />
-            </div>
-            {/* Center Hole */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-gray-800 rounded-full border-2 border-gray-500 shadow-inner"></div>
-          </div>
+          <PixelImage src={albumArt} />
         </div>
 
         <div className="mt-4 text-center">
@@ -306,7 +293,7 @@ export default function Addsong() {
           <div className="flex gap-3">
             <button
               onClick={prevSong}
-              className="px-6 py-3 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-600 font-medium"
+              className="px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-600 font-medium"
               disabled={!isPlayerReady || songs.length === 0}
             >
               ⏮ Previous
@@ -315,7 +302,7 @@ export default function Addsong() {
             {isPlaying ? (
               <button
                 onClick={handlePause}
-                className="px-6 py-3 bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors disabled:bg-gray-600 font-medium"
+                className="px-4 py-2 bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors disabled:bg-gray-600 font-medium"
                 disabled={!isPlayerReady || songs.length === 0}
               >
                 ⏸ Pause
@@ -323,7 +310,7 @@ export default function Addsong() {
             ) : (
               <button
                 onClick={handlePlay}
-                className="px-6 py-3 bg-green-500 rounded-lg hover:bg-green-600 transition-colors disabled:bg-gray-600 font-medium"
+                className="px-4 py-2 bg-green-500 rounded-lg hover:bg-green-600 transition-colors disabled:bg-gray-600 font-medium"
                 disabled={!isPlayerReady || songs.length === 0}
               >
                 ▶ Play
@@ -331,7 +318,7 @@ export default function Addsong() {
             )}
             <button
               onClick={nextSong}
-              className="px-6 py-3 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-600 font-medium"
+              className="px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-600 font-medium"
               disabled={!isPlayerReady || songs.length === 0}
             >
               Next ⏭
@@ -397,11 +384,6 @@ export default function Addsong() {
                   }`}
                   onClick={() => playSong(idx)}
                 >
-                  <img
-                    src={song.thumbnail}
-                    alt={song.title}
-                    className="w-16 h-12 rounded object-cover"
-                  />
                   <div className="flex-1">
                     <div className="font-medium">{song.title}</div>
                     <div className="text-xs ">Click to play</div>

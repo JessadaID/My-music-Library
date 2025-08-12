@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import {  Anuphan} from "next/font/google";
+import {  Pixelify_Sans} from "next/font/google";
 import "./globals.css";
 import Navbar from "./navbar";
 import { Providers } from "./providers";
 
 
-const AnuphanSan = Anuphan({
+const pixelify_Sans = Pixelify_Sans({
   subsets: ["latin"],
 });
 
@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={AnuphanSan.className}
+        className={pixelify_Sans.className}
       >
         <Providers>
           <Navbar />

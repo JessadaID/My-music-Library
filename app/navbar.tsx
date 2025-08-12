@@ -55,19 +55,19 @@ export function Navbar() {
           </a>
         </li>
         <li>
-          <a href="/Library">เพลงทั้งหมด </a>
+          <a href="/Library">All Music </a>
         </li>
         <li>
-          <a href="/Playlists">เพลย์ลิสต์ </a>
+          <a href="/Playlists">PlayList </a>
         </li>
         <li>
-          <a href="/Favorites">เพลงโปรด </a>
+          <a href="/Favorites">Favorite Music</a>
         </li>
         <li>
-          <a href="/Upload">เพิ่มเพลง </a>
+          <a href="/Upload">Add Music</a>
         </li>
         <li>
-          <a href="/register">ค้นหาเพลง </a>
+          <a href="/register">Search</a>
         </li>
         <div className="ml-auto">
           <SwitchTheme />
