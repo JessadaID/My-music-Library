@@ -3,6 +3,7 @@ import {  Pixelify_Sans} from "next/font/google";
 import "./globals.css";
 import Navbar from "./navbar";
 import { Providers } from "./providers";
+import NextFallimgStars from "./component/NextFallingStars"
 
 
 const pixelify_Sans = Pixelify_Sans({
@@ -26,6 +27,7 @@ export default function RootLayout({
       >
         <Providers>
           <Navbar />
+          <NextFallimgStars />
           <main className="p-4">{children}</main>
         </Providers>
       </body>

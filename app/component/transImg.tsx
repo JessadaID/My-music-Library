@@ -5,7 +5,9 @@ import { useState, useEffect, useCallback } from "react";
 const images = [
   { id: 1, src: "./y/y-1.jfif" },
   { id: 2, src: "./y/y-2.jfif" },
-  { id: 3, src: "./y/y-3.jfif" }
+  { id: 3, src: "./y/y-3.jfif" },
+  { id: 4, src: "./y/y-4.jfif" },
+
 ];
 
 export default function TransImg() {

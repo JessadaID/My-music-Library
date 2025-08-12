@@ -285,7 +285,7 @@ export default function Addsong() {
               max={duration || 0}
               value={progress}
               onChange={handleSeek}
-              className="flex-1"
+              className="flex-1 accent-amber-400 dark:accent-blue-500 range"
               disabled={!isPlayerReady || songs.length === 0}
             />
             <span className="min-w-12">{formatTime(duration)}</span>
