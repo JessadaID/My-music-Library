@@ -9,17 +9,19 @@ interface Song {
   url: string;
 }
 
-export default function Addsong() {
+export default function MusicPlayer() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [current, setCurrent] = useState(0);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showAddsong, setShowAddsong] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  
   const playerRef = useRef<any>(null);
   const intervalRef = useRef<any>(null);
-  const isAutoPlayingRef = useRef(false); // ป้องกันการเรียกซ้ำ
-  const [showAddsong, setShowAddsong] = useState(false);
+  const isAutoPlayingRef = useRef(false);
 
   // Storage keys
   const STORAGE_KEYS = {
@@ -37,7 +39,6 @@ export default function Addsong() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify(songs));
-      //console.log('Saved songs to localStorage:', songs.length);
     }
   }, [songs]);
 
@@ -45,7 +46,6 @@ export default function Addsong() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEYS.CURRENT, JSON.stringify(current));
-      //console.log('Saved current index to localStorage:', current);
     }
   }, [current]);
 
@@ -60,27 +60,22 @@ export default function Addsong() {
     if (typeof window === 'undefined') return;
 
     try {
-      // Load songs
       const savedSongs = localStorage.getItem(STORAGE_KEYS.SONGS);
       if (savedSongs) {
         const parsedSongs = JSON.parse(savedSongs);
         if (Array.isArray(parsedSongs)) {
           setSongs(parsedSongs);
-          //console.log('Loaded songs from localStorage:', parsedSongs.length);
         }
       }
 
-      // Load current index
       const savedCurrent = localStorage.getItem(STORAGE_KEYS.CURRENT);
       if (savedCurrent) {
         const parsedCurrent = JSON.parse(savedCurrent);
         if (typeof parsedCurrent === 'number' && parsedCurrent >= 0) {
           setCurrent(parsedCurrent);
-          //console.log('Loaded current index from localStorage:', parsedCurrent);
         }
       }
 
-      // Load showAddsong state
       const savedShowAddsong = localStorage.getItem(STORAGE_KEYS.SHOW_ADD_SONG);
       if (savedShowAddsong) {
         const parsedShowAddsong = JSON.parse(savedShowAddsong);
@@ -93,7 +88,6 @@ export default function Addsong() {
     }
   };
 
-  // Get current song and songs from localStorage
   const getCurrentFromStorage = () => {
     if (typeof window === 'undefined') {
       return { currentSongs: [], currentIndex: 0 };
@@ -113,7 +107,55 @@ export default function Addsong() {
     }
   };
 
-  // Function สำหรับเล่นเพลงถัดไป (ใช้ localStorage แทน ref) - แก้ไขให้เล่นซ้ำเมื่อมีเพลงเดียว
+  // Drag & Drop functions
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      return;
+    }
+
+    setSongs(prevSongs => {
+      const newSongs = [...prevSongs];
+      const draggedSong = newSongs[draggedIndex];
+      
+      // Remove dragged item
+      newSongs.splice(draggedIndex, 1);
+      
+      // Insert at drop position
+      newSongs.splice(dropIndex, 0, draggedSong);
+      
+      // Update current index if needed
+      if (draggedIndex === current) {
+        setCurrent(dropIndex);
+      } else if (draggedIndex < current && dropIndex >= current) {
+        setCurrent(current - 1);
+      } else if (draggedIndex > current && dropIndex <= current) {
+        setCurrent(current + 1);
+      }
+      
+      return newSongs;
+    });
+    
+    setDraggedIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
+  // Auto-play next song
   const playNextSong = useCallback(() => {
     const { currentSongs, currentIndex } = getCurrentFromStorage();
 
@@ -121,7 +163,6 @@ export default function Addsong() {
       return;
     }
 
-    // แก้ไข: ลบเงื่อนไขที่ป้องกันการเล่นซ้ำเมื่อมีเพลงเดียว
     if (currentSongs.length === 0) {
       return;
     }
@@ -132,26 +173,19 @@ export default function Addsong() {
       let nextIndex, nextSong;
       
       if (currentSongs.length === 1) {
-        // ถ้ามีเพลงเดียว ให้เล่นเพลงเดิมซ้ำ
         nextIndex = 0;
         nextSong = currentSongs[0];
-        //console.log(`🔄 Repeating single song: ${nextSong.title}`);
       } else {
-        // ถ้ามีหลายเพลง ให้เล่นเพลงถัดไป
         nextIndex = (currentIndex + 1) % currentSongs.length;
         nextSong = currentSongs[nextIndex];
-        //console.log(`🎵 Auto-playing next song: ${nextIndex} - ${nextSong.title}`);
       }
 
-      // Update current index
       setCurrent(nextIndex);
 
-      // Load and play next video
       if (playerRef.current && nextSong) {
         playerRef.current.loadVideoById(nextSong.id);
       }
 
-      // Reset flag after a delay
       setTimeout(() => {
         isAutoPlayingRef.current = false;
       }, 2000);
@@ -164,7 +198,6 @@ export default function Addsong() {
   // Load YouTube API
   useEffect(() => {
     if ((window as any).YT) {
-      // API already loaded
       initializePlayer();
       return;
     }
@@ -194,54 +227,38 @@ export default function Addsong() {
       },
       events: {
         onReady: (event: any) => {
-          //console.log("✅ YouTube Player is ready");
           setIsPlayerReady(true);
 
-          // หลังจาก player พร้อมแล้ว ถ้ามีเพลงใน localStorage ให้โหลดเพลงปัจจุบัน
           const { currentSongs, currentIndex } = getCurrentFromStorage();
           if (currentSongs.length > 0 && currentSongs[currentIndex]) {
             setTimeout(() => {
-              //console.log("🎯 Loading current song from localStorage");
               playerRef.current.cueVideoById(currentSongs[currentIndex].id);
             }, 500);
           }
         },
         onStateChange: (event: any) => {
-          //console.log("🎮 Player state changed:", event.data);
-
           if (event.data === 1) {
-            // Playing
             setIsPlaying(true);
             setDuration(playerRef.current.getDuration());
             intervalRef.current = setInterval(() => {
               setProgress(playerRef.current.getCurrentTime());
             }, 1000);
           } else if (event.data === 2) {
-            // Paused
             setIsPlaying(false);
             clearInterval(intervalRef.current);
           } else if (event.data === 0) {
-            // Ended - แก้ไขให้เล่นซ้ำเมื่อมีเพลงเดียว
             setIsPlaying(false);
             clearInterval(intervalRef.current);
             setProgress(0);
 
-            // Auto-play next song (or repeat if only one song) after a short delay
             setTimeout(() => {
               playNextSong();
             }, 1000);
-          } else if (event.data === 3) {
-            // Buffering
-            //console.log('⏳ Buffering...');
-          } else if (event.data === 5) {
-            // Video cued
-            //console.log('📼 Video cued');
           }
         },
         onError: (event: any) => {
-          console.error('❌ YouTube Player Error:', event.data);
+          console.error('YouTube Player Error:', event.data);
           isAutoPlayingRef.current = false;
-          // Try next song if there's an error
           setTimeout(() => {
             playNextSong();
           }, 2000);
@@ -250,7 +267,7 @@ export default function Addsong() {
     });
   };
 
-  // Add song with oEmbed to get title and thumbnail
+  // Add song function
   const addSong = async (url: string) => {
     const id = extractVideoId(url);
     if (!id) return alert("Invalid YouTube URL");
@@ -260,7 +277,6 @@ export default function Addsong() {
         `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`
       );
       const data = await res.json();
-      //console.log(data);
       
       const newSong: Song = {
         id,
@@ -271,12 +287,9 @@ export default function Addsong() {
 
       setSongs((prevSongs) => {
         const newSongs = [...prevSongs, newSong];
-        //console.log("➕ Added song:", newSong.title);
 
-        // ถ้าเป็นเพลงแรกและ player พร้อมแล้ว ให้เล่นทันที
         if (prevSongs.length === 0 && isPlayerReady && playerRef.current) {
           setTimeout(() => {
-            //console.log("🎯 Playing first song automatically");
             playerRef.current.loadVideoById(id);
             setCurrent(0);
           }, 500);
@@ -296,11 +309,11 @@ export default function Addsong() {
     return match ? match[1] : null;
   };
 
+  // Playback control functions
   const playSong = (index: number) => {
     if (!playerRef.current || !isPlayerReady || songs.length === 0) return;
 
-    //console.log(`🎯 Manual play song: ${index} - ${songs[index].title}`);
-    isAutoPlayingRef.current = false; // Reset auto-play flag
+    isAutoPlayingRef.current = false;
     playerRef.current.loadVideoById(songs[index].id);
     setCurrent(index);
   };
@@ -327,7 +340,6 @@ export default function Addsong() {
   const handlePlay = () => {
     if (!playerRef.current || !isPlayerReady) return;
 
-    // ถ้ายังไม่มีเพลงที่โหลดอยู่ ให้โหลดเพลงปัจจุบัน
     if (songs.length > 0) {
       const videoData = playerRef.current.getVideoData();
       if (
@@ -358,7 +370,6 @@ export default function Addsong() {
   const deleteSong = (index: number) => {
     if (songs.length === 0) return;
 
-    // หยุดเล่นเพลงเฉพาะเมื่อลบเพลงที่กำลังเล่นอยู่
     if (index === current && playerRef.current && isPlayerReady) {
       playerRef.current.stopVideo();
       setIsPlaying(false);
@@ -368,28 +379,22 @@ export default function Addsong() {
 
     setSongs((prevSongs) => {
       const newSongs = prevSongs.filter((_, idx) => idx !== index);
-      //(`🗑️ Deleted song: ${prevSongs[index].title}`);
 
-      // ปรับ current index หลังจากลบ
       if (newSongs.length === 0) {
         setCurrent(0);
       } else if (index < current) {
-        // ถ้าลบเพลงที่อยู่ก่อนหน้าเพลงปัจจุบัน ให้ลด current index ลง 1
         setCurrent(current - 1);
       } else if (index === current) {
-        // ถ้าลบเพลงปัจจุบัน ให้ไปเพลงที่มี index เดิม (หรือเพลงสุดท้ายถ้า index เกิน)
         const newCurrent = current >= newSongs.length ? 0 : current;
         setCurrent(newCurrent);
       }
-      // ถ้าลบเพลงที่อยู่หลังเพลงปัจจุบัน ไม่ต้องเปลี่ยน current index
 
       return newSongs;
     });
   };
 
-  // Clear localStorage function (สำหรับ debug หรือ reset)
+  // Clear all songs
   const clearStorage = () => {
-    // หยุดเล่นเพลงเมื่อ clear all
     if(confirm("ต้องการจะลบเพลงทั้งหมดใช่หรือไม่?")){
       if (playerRef.current && isPlayerReady) {
         playerRef.current.stopVideo();
@@ -408,7 +413,6 @@ export default function Addsong() {
         setShowAddsong(false);
       }
     }
-    
   };
 
   const albumArt =
@@ -417,6 +421,7 @@ export default function Addsong() {
 
   return (
     <div className="p-4 grid gap-6 bg-gray-100 dark:bg-gray-900 shadow-md grid-cols-1 lg:grid-cols-3 h-full">
+      {/* Music Player Section */}
       <section>
         <div className="col-span-1 flex items-center justify-center">
           <PixelImage src={albumArt} />
@@ -463,6 +468,7 @@ export default function Addsong() {
                 ▶ Play
               </button>
             )}
+            
             <button
               onClick={nextSong}
               className="px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-600 font-medium"
@@ -474,24 +480,23 @@ export default function Addsong() {
         </div>
       </section>
 
+      {/* Playlist Management Section */}
       <section className="col-span-1 lg:col-span-2 relative">
-        {/* Add Song */}
+        {/* Add Song Button */}
         <button
-          onClick={() => {
-            setShowAddsong(!showAddsong);
-          }}
-          className="py-1 px-2 bg-emerald-500 rounded-sm hover:bg-emerald-600 absolute top-1 right-1"
+          onClick={() => setShowAddsong(!showAddsong)}
+          className="py-1 px-2 bg-emerald-500 rounded-sm hover:bg-emerald-600 absolute top-1 right-1 text-white"
         >
-          Addsong +
+          Add Song +
         </button>
 
-
-        <div className={showAddsong ? "block flex flex-wrap sm:flex-nowrap gap-2 mb-4 " : "hidden " }>
+        {/* Add Song Form */}
+        <div className={showAddsong ? "block flex flex-wrap sm:flex-nowrap gap-2 mb-4" : "hidden"}>
           <input
             type="text"
             id="urlInput"
             placeholder="Paste YouTube URL..."
-            className="p-2 rounded w-3/4 sm:w-1/2 bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-600 "
+            className="p-2 rounded w-3/4 sm:w-1/2 bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-600"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 const input = e.target as HTMLInputElement;
@@ -525,18 +530,18 @@ export default function Addsong() {
           )}
         </div>
 
-        {/* Playlist */}
+        {/* Playlist with Drag & Drop */}
         <div className="pt-4">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl font-semibold mb-2">Playlist</h2>
-            {/* Clear Storage Button (สำหรับ debug) */}
+            <h2 className="text-xl font-semibold mb-2">Playlist (Drag & Drop to Reorder)</h2>
             <button
               onClick={clearStorage}
-              className="py-1 px-2 bg-red-500 rounded-sm hover:bg-red-600  text-white text-sm"
+              className="py-1 px-2 bg-red-500 rounded-sm hover:bg-red-600 text-white text-sm"
             >
               Clear All
             </button>
           </div>
+          
           <ul
             className={
               `space-y-1 overflow-y-auto overflow-x-hidden ` +
@@ -548,13 +553,25 @@ export default function Addsong() {
             {songs.map((song, idx) => (
               <li
                 key={idx}
+                draggable
+                onDragStart={(e) => handleDragStart(e, idx)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, idx)}
+                onDragEnd={handleDragEnd}
                 className={`flex items-center gap-3 p-3 rounded cursor-pointer transition-colors ${
                   idx === current
                     ? "bg-green-700 border-l-4 border-green-400"
                     : "bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-800"
+                } ${
+                  draggedIndex === idx ? "opacity-50" : ""
                 }`}
                 onClick={() => playSong(idx)}
               >
+                {/* Drag Handle */}
+                <div className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
+                  ⋮⋮
+                </div>
+                
                 <div className="flex-1">
                   <div className="font-medium">{song.title}</div>
                   <div className="text-xs">
@@ -571,7 +588,7 @@ export default function Addsong() {
                   
                   <button
                     onClick={(e) => {
-                      e.stopPropagation(); // ป้องกันการ trigger playSong
+                      e.stopPropagation();
                       deleteSong(idx);
                     }}
                     className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded transition-colors"
@@ -583,11 +600,18 @@ export default function Addsong() {
               </li>
             ))}
           </ul>
+          
+          {songs.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <p>No songs in playlist</p>
+              <p className="text-sm">Add some YouTube songs to get started!</p>
+            </div>
+          )}
         </div>
       </section>
 
+      {/* Hidden YouTube Player */}
       <section>
-        {/* Hidden Player */}
         <div id="player" style={{ display: "none" }}></div>
       </section>
     </div>

@@ -1,4 +1,4 @@
-import Addsong from "./component/Addsong";
+import MusicPlayer from "./component/MusicPlayer";
 import TransImg from "./component/transImg";
 
 export default function Home() {
@@ -9,7 +9,7 @@ export default function Home() {
       <section>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="col-span-3 h-full ">
-            <Addsong />
+            <MusicPlayer />
           </div>
           <div className="col-span-1 flex justify-center items-center">
             <TransImg />
