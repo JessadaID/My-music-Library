@@ -1,5 +1,5 @@
-## MUSIC LIBRARY (ONGOING PROJECT)
-เป็นโปรเจคที่กำลังพัฒนาโดยการ Vibe Codeing แนวคิดโปรเจคนี้คือการนำ url จาก คลิปเพลงใน Youtube มาใช้เป็น Playlist โดยตกแต่งเป็น Style 8 bit
+## MUSIC LIBRARY (Minetube)
+เป็นโปรเจคที่กำลังพัฒนาโดยการ Vibe Codeing แนวคิดโปรเจคนี้คือการนำ url จาก คลิปเพลงใน Youtube มาใช้เป็น Playlist โดยตกแต่งเป็น Style 8 bit และเพลงจะเก็บไว้ที่ Localstorage เป็น URL Youtube
 
 ## เครื่องมือ
  - Next.js
@@ -17,9 +17,9 @@
  - รูปประกอบที่ค่อยๆเปลี่ยนทุกๆ 30 วินาที
 
  ## Preview
- ![ligth_mode](./web-ligthmode.png)
+ ![ligth_mode](./public/web-ligthmode.png)
 
- ![dark_mode](./web-darkmode.png)
+ ![dark_mode](./public/web-darkmode.png)
 
  ## Demo
  [Click Here]()
