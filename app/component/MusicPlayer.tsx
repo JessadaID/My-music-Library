@@ -427,7 +427,12 @@ export default function MusicPlayer() {
           <PixelImage src={albumArt} />
         </div>
 
-        <div className="mt-4 text-center">
+        <div className="mt-4 text-center ">
+          <div className="mb-3 ">
+            <span className="inline-block px-2 py-0.5 text-xs rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">Now Playing</span>
+            <h2 className="mt-2 text-lg font-semibold truncate max-w-full">{songs[current]?.title || "No song selected"}</h2>
+          </div>
+         
           <div className="flex items-center gap-2 text-sm">
             <span className="min-w-12">{formatTime(progress)}</span>
             <input
@@ -481,40 +486,52 @@ export default function MusicPlayer() {
       </section>
 
       {/* Playlist Management Section */}
-      <section className="col-span-1 lg:col-span-2 relative">
-        {/* Add Song Button */}
-        <button
-          onClick={() => setShowAddsong(!showAddsong)}
-          className="py-1 px-2 bg-emerald-500 rounded-sm hover:bg-emerald-600 absolute top-1 right-1 text-white"
-        >
-          Add Song +
-        </button>
+      <section className="col-span-1 lg:col-span-2">
+        {/* Add Song Panel */}
+        <div className="mb-4 border rounded-lg bg-white/60 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between px-3 py-2">
+            <div>
+              <div className="text-sm font-semibold">เพิ่มเพลง</div>
+              <div className="text-xs opacity-70">วางลิงก์ YouTube เพื่อเพิ่มลงในเพลย์ลิสต์</div>
+            </div>
+            <button
+              onClick={() => setShowAddsong(!showAddsong)}
+              className="py-1 px-2 bg-emerald-500 rounded-md hover:bg-emerald-600 text-white text-sm"
+            >
+              {showAddsong ? "ซ่อน" : "เพิ่มเพลง"}
+            </button>
+          </div>
 
-        {/* Add Song Form */}
-        <div className={showAddsong ? "block flex flex-wrap sm:flex-nowrap gap-2 mb-4" : "hidden"}>
-          <input
-            type="text"
-            id="urlInput"
-            placeholder="Paste YouTube URL..."
-            className="p-2 rounded w-3/4 sm:w-1/2 bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-600"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                const input = e.target as HTMLInputElement;
-                addSong(input.value);
-                input.value = "";
-              }
-            }}
-          />
-          <button
-            className="px-4 py-2 transition-colors bg-blue-800 hover:bg-blue-900 text-white rounded dark:bg-yellow-400 dark:hover:bg-yellow-500 w-full sm:w-auto"
-            onClick={() => {
-              const input = document.getElementById("urlInput") as HTMLInputElement;
-              addSong(input.value);
-              input.value = "";
-            }}
-          >
-            Add Song
-          </button>
+          {showAddsong && (
+            <div className="px-3 pb-3">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  id="urlInput"
+                  placeholder="เช่น https://youtu.be/xxxxxxxxxxx หรือ https://www.youtube.com/watch?v=xxxxxxxxxxx"
+                  className="p-2 rounded flex-1 bg-white border border-gray-300 dark:bg-gray-900 dark:border-gray-700"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const input = e.target as HTMLInputElement;
+                      addSong(input.value);
+                      input.value = "";
+                    }
+                  }}
+                />
+                <button
+                  className="px-4 py-2 transition-colors bg-blue-600 hover:bg-blue-700 text-white rounded"
+                  onClick={() => {
+                    const input = document.getElementById("urlInput") as HTMLInputElement;
+                    addSong(input.value);
+                    input.value = "";
+                  }}
+                >
+                  เพิ่มเพลง
+                </button>
+              </div>
+              <p className="mt-1 text-xs opacity-70">รองรับลิงก์รูปแบบ youtu.be และ youtube.com/watch?v=</p>
+            </div>
+          )}
         </div>
 
         {/* Player Status */}
@@ -571,9 +588,10 @@ export default function MusicPlayer() {
                 <div className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
                   ⋮⋮
                 </div>
+                <img src={song.thumbnail} alt={song.title} className="w-12 h-12 object-cover rounded" loading="lazy" />
                 
                 <div className="flex-1">
-                  <div className="font-medium">{song.title}</div>
+                  <div className="font-medium truncate">{song.title}</div>
                   <div className="text-xs">
                     Click to play {songs.length === 1 && " • Will repeat"}
                   </div>

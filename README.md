@@ -15,3 +15,11 @@
  - เพิ่มเพลงเก็บที่ Localstorage
  - แปลงรูปปกคลิปเป็น Style 8 bit
  - รูปประกอบที่ค่อยๆเปลี่ยนทุกๆ 30 วินาที
+
+ ## Preview
+ ![ligth_mode](./web-ligthmode.png)
+
+ ![dark_mode](./web-darkmode.png)
+
+ ## Demo
+ [Click Here]()
