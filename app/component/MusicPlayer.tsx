@@ -548,8 +548,8 @@ export default function MusicPlayer() {
         </div>
 
         {/* Playlist with Drag & Drop */}
-        <div className="pt-4">
-          <div className="flex justify-between items-center mb-2">
+        <div className="pt-4 ">
+          <div className="flex justify-between items-center mb-2 ">
             <h2 className="text-xl font-semibold mb-2">Playlist (Drag & Drop to Reorder)</h2>
             <button
               onClick={clearStorage}
@@ -561,10 +561,7 @@ export default function MusicPlayer() {
           
           <ul
             className={
-              `space-y-1 overflow-y-auto overflow-x-hidden ` +
-              (showAddsong
-                ? "h-auto lg:h-[320px]"
-                : "h-auto lg:h-[375px]")
+              `space-y-1 overflow-y-auto overflow-x-hidden` 
             }
           >
             {songs.map((song, idx) => (
@@ -620,7 +617,7 @@ export default function MusicPlayer() {
           </ul>
           
           {songs.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center pt-8 text-gray-500">
               <p>No songs in playlist</p>
               <p className="text-sm">Add some YouTube songs to get started!</p>
             </div>
