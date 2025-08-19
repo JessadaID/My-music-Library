@@ -1,6 +1,9 @@
 ## MUSIC LIBRARY (Minetube)
 เป็นโปรเจคที่กำลังพัฒนาโดยการ Vibe Codeing แนวคิดโปรเจคนี้คือการนำ url จาก คลิปเพลงใน Youtube มาใช้เป็น Playlist โดยตกแต่งเป็น Style 8 bit และเพลงจะเก็บไว้ที่ Localstorage เป็น URL Youtube
 
+## Demo
+[Click Here](https://my-music-library-theta.vercel.app/)
+
 ## เครื่องมือ
  - Next.js
  - Localstorage
@@ -20,6 +23,3 @@
  ![ligth_mode](./public/web-ligthmode.png)
 
  ![dark_mode](./public/web-darkmode.png)
-
- ## Demo
- [Click Here](https://my-music-library-theta.vercel.app/)

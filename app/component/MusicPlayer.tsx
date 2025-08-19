@@ -23,6 +23,8 @@ export default function MusicPlayer() {
   const intervalRef = useRef<any>(null);
   const isAutoPlayingRef = useRef(false);
 
+  const defaultSiteTitle = "MineTube";
+
   // Storage keys
   const STORAGE_KEYS = {
     SONGS: 'music_player_songs',
@@ -419,6 +421,65 @@ export default function MusicPlayer() {
     songs[current]?.thumbnail ||
     "https://static.standard.co.uk/s3fs-public/thumbnails/image/2019/03/05/11/sei26139543-1-0.jpg?quality=75&auto=webp&width=960";
 
+  // Update document title only based on current song
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const song = songs[current];
+    const titlePrefix = song ? (isPlaying ? "▶ " : "⏸ ") : "";
+    document.title = song
+      ? `${titlePrefix}${song.title} — ${defaultSiteTitle}`
+      : defaultSiteTitle;
+  }, [current, songs, isPlaying]);
+
+  // Media Session API integration
+  useEffect(() => {
+    if (typeof navigator === "undefined") return;
+    const anyNavigator = navigator as any;
+    if (!("mediaSession" in anyNavigator)) return;
+
+    const song = songs[current];
+    if (!song) return;
+
+    try {
+      anyNavigator.mediaSession.metadata = new (window as any).MediaMetadata({
+        title: song.title,
+        artist: "",
+        album: defaultSiteTitle,
+        artwork: [
+          { src: song.thumbnail, sizes: "96x96", type: "image/jpeg" },
+          { src: song.thumbnail, sizes: "192x192", type: "image/jpeg" },
+          { src: song.thumbnail, sizes: "512x512", type: "image/jpeg" }
+        ]
+      });
+
+      anyNavigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+      anyNavigator.mediaSession.setActionHandler("play", () => handlePlay());
+      anyNavigator.mediaSession.setActionHandler("pause", () => handlePause());
+      anyNavigator.mediaSession.setActionHandler("previoustrack", () => prevSong());
+      anyNavigator.mediaSession.setActionHandler("nexttrack", () => nextSong());
+    } catch (e) {
+      // noop
+    }
+  }, [current, songs, isPlaying]);
+
+  // Update media session position state
+  useEffect(() => {
+    if (typeof navigator === "undefined") return;
+    const anyNavigator = navigator as any;
+    if (!("mediaSession" in anyNavigator)) return;
+    try {
+      if (duration && !isNaN(duration)) {
+        anyNavigator.mediaSession.setPositionState({
+          duration,
+          playbackRate: 1,
+          position: progress || 0
+        });
+      }
+    } catch (e) {
+      // noop
+    }
+  }, [progress, duration]);
+
   return (
     <div className="p-4 grid gap-6 bg-gray-100 dark:bg-gray-900 shadow-md grid-cols-1 lg:grid-cols-3 h-full">
       {/* Music Player Section */}
@@ -632,3 +693,4 @@ export default function MusicPlayer() {
     </div>
   );
 }
+
