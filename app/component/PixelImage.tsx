@@ -80,6 +80,8 @@ export default function PixelImage({
       style={{
         imageRendering: "pixelated",
         backgroundColor: "#000",
+        width: "100%",
+        height: "auto",
       }}
     />
   );

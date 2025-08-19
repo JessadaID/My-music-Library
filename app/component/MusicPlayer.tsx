@@ -511,36 +511,42 @@ export default function MusicPlayer() {
           <div className="flex flex-wrap gap-3 mt-4 justify-center">
             <button
               onClick={prevSong}
-              className="px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-600 font-medium"
+              aria-label="Previous"
+              className="px-3 py-2 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-600 font-medium inline-flex items-center gap-1"
               disabled={!isPlayerReady || songs.length === 0}
             >
-              ⏮ Previous
+              <span aria-hidden>⏮</span>
             </button>
 
             {isPlaying ? (
               <button
                 onClick={handlePause}
-                className="px-4 py-2 bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors disabled:bg-gray-600 font-medium"
+                aria-label="Pause"
+                className="px-3 py-2 bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors disabled:bg-gray-600 font-medium inline-flex items-center gap-1"
                 disabled={!isPlayerReady || songs.length === 0}
               >
-                ⏸ Pause
+                <span aria-hidden>⏸</span>
+                <span className="hidden lg:inline">Pause</span>
               </button>
             ) : (
               <button
                 onClick={handlePlay}
-                className="px-4 py-2 bg-green-500 rounded-lg hover:bg-green-600 transition-colors disabled:bg-gray-600 font-medium"
+                aria-label="Play"
+                className="px-3 py-2 bg-green-500 rounded-lg hover:bg-green-600 transition-colors disabled:bg-gray-600 font-medium inline-flex items-center gap-1"
                 disabled={!isPlayerReady || songs.length === 0}
               >
-                ▶ Play
+                <span aria-hidden>▶</span>
+                <span className="hidden  lg:inline">Play</span>
               </button>
             )}
             
             <button
               onClick={nextSong}
-              className="px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-600 font-medium"
+              aria-label="Next"
+              className="px-3 py-2 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-600 font-medium inline-flex items-center gap-1"
               disabled={!isPlayerReady || songs.length === 0}
             >
-              Next ⏭
+              <span aria-hidden>⏭</span>
             </button>
           </div>
         </div>
@@ -552,14 +558,14 @@ export default function MusicPlayer() {
         <div className="mb-4 border rounded-lg bg-white/60 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between px-3 py-2">
             <div>
-              <div className="text-sm font-semibold">เพิ่มเพลง</div>
+              <div className="text-sm font-semibold">Add Song</div>
               <div className="text-xs opacity-70">วางลิงก์ YouTube เพื่อเพิ่มลงในเพลย์ลิสต์</div>
             </div>
             <button
               onClick={() => setShowAddsong(!showAddsong)}
               className="py-1 px-2 bg-emerald-500 rounded-md hover:bg-emerald-600 text-white text-sm"
             >
-              {showAddsong ? "ซ่อน" : "เพิ่มเพลง"}
+              {showAddsong ? "Hidden" : "Add"}
             </button>
           </div>
 
@@ -587,7 +593,7 @@ export default function MusicPlayer() {
                     input.value = "";
                   }}
                 >
-                  เพิ่มเพลง
+                  Add
                 </button>
               </div>
               <p className="mt-1 text-xs opacity-70">รองรับลิงก์รูปแบบ youtu.be และ youtube.com/watch?v=</p>
@@ -611,7 +617,7 @@ export default function MusicPlayer() {
         {/* Playlist with Drag & Drop */}
         <div className="pt-4 ">
           <div className="flex justify-between items-center mb-2 ">
-            <h2 className="text-xl font-semibold mb-2">Playlist (Drag & Drop to Reorder)</h2>
+            <h2 className="lg:text-xl font-semibold mb-2 md:text-lg sm:text-md">Playlist (Drag & Drop to Reorder)</h2>
             <button
               onClick={clearStorage}
               className="py-1 px-2 bg-red-500 rounded-sm hover:bg-red-600 text-white text-sm"
@@ -622,7 +628,7 @@ export default function MusicPlayer() {
           
           <ul
             className={
-              `space-y-1 overflow-y-auto overflow-x-hidden` 
+              `space-y-1 overflow-y-auto overflow-x-hidden pr-1` 
             }
           >
             {songs.map((song, idx) => (
@@ -633,7 +639,7 @@ export default function MusicPlayer() {
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, idx)}
                 onDragEnd={handleDragEnd}
-                className={`flex items-center gap-3 p-3 rounded cursor-pointer transition-colors ${
+                className={`flex items-center gap-3 p-3 rounded cursor-pointer transition-colors flex-wrap sm:flex-nowrap ${
                   idx === current
                     ? "bg-green-700 border-l-4 border-green-400"
                     : "bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-800"
@@ -643,19 +649,19 @@ export default function MusicPlayer() {
                 onClick={() => playSong(idx)}
               >
                 {/* Drag Handle */}
-                <div className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
+                <div className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing shrink-0">
                   ⋮⋮
                 </div>
-                <img src={song.thumbnail} alt={song.title} className="w-12 h-12 object-cover rounded" loading="lazy" />
+                <img src={song.thumbnail} alt={song.title} className="w-12 h-12 object-cover rounded shrink-0 hidden lg:inline " loading="lazy" />
                 
-                <div className="flex-1">
-                  <div className="font-medium truncate">{song.title}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate ">{song.title}</div>
                   <div className="text-xs">
                     Click to play {songs.length === 1 && " • Will repeat"}
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full justify-end sm:w-auto sm:justify-end shrink-0">
                   {idx === current && (
                     <span className="text-green-400 text-xl">
                       ♪
