@@ -628,7 +628,7 @@ export default function MusicPlayer() {
           
           <ul
             className={
-              `space-y-1 overflow-y-auto overflow-x-hidden pr-1` 
+              `space-y-1 overflow-y-auto overflow-x-hidden pr-1 h-[300]` 
             }
           >
             {songs.map((song, idx) => (
