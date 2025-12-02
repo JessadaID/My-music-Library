@@ -24,7 +24,10 @@ const SwitchTheme = () => {
   };
 
   return (
-    <button onClick={handleSwitchTheme}>
+    <button
+      onClick={handleSwitchTheme}
+      className="p-2 border border-primary hover:bg-primary hover:text-white dark:border-white dark:hover:bg-white dark:hover:text-primary"
+    >
       {theme === "dark" ? <FaMoon /> : <FaSun />}
     </button>
   );
@@ -32,7 +35,7 @@ const SwitchTheme = () => {
 
 export function Navbar() {
   return (
-    <nav className="shadow-md p-4">
+    <nav className="p-4 border-b border-primary dark:border-white">
       <ul className="flex items-center space-x-4">
         <li>
           <a href="/">

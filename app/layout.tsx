@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import {  Pixelify_Sans} from "next/font/google";
+import { Sarabun } from "next/font/google";
 import "./globals.css";
 import Navbar from "./navbar";
 import { Providers } from "./providers";
-import NextFallimgStars from "./component/NextFallingStars"
 
-
-const pixelify_Sans = Pixelify_Sans({
-  subsets: ["latin"],
+const sarabun = Sarabun({
+  weight: ["400","500", "700"],
+  subsets: ["latin"]
 });
 
 export const metadata: Metadata = {
@@ -25,13 +24,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={pixelify_Sans.className}
-      >
+      <body className={`${sarabun.className} bg-white text-primary dark:bg-primary dark:text-white`}>
         <Providers>
           <Navbar />
-          <NextFallimgStars />
-          <main className="p-4">{children}</main>
+          <main className="p-4 bg-white dark:bg-primary">{children}</main>
         </Providers>
       </body>
     </html>
