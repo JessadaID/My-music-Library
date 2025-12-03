@@ -26,7 +26,7 @@ const SwitchTheme = () => {
   return (
     <button
       onClick={handleSwitchTheme}
-      className="p-2 border border-primary hover:bg-primary hover:text-white dark:border-white dark:hover:bg-white dark:hover:text-primary"
+      className="p-2 hover:bg-primary hover:text-white dark:border-white dark:hover:bg-white dark:hover:text-primary cursor-pointer"
     >
       {theme === "dark" ? <FaMoon /> : <FaSun />}
     </button>

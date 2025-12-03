@@ -24,10 +24,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${sarabun.className} bg-white text-primary dark:bg-primary dark:text-white`}>
+      <body className={`${sarabun.className} bg-white/80 text-primary dark:bg-primary dark:text-white`}>
         <Providers>
           <Navbar />
-          <main className="p-4 bg-white dark:bg-primary">{children}</main>
+          <main className="p-4 bg-white/80 dark:bg-primary max-w-7xl mx-auto">{children}</main>
         </Providers>
       </body>
     </html>

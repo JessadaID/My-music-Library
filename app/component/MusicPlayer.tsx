@@ -480,7 +480,7 @@ export default function MusicPlayer() {
   }, [progress, duration]);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 p-4 bg-white dark:bg-primary h-full max-h-screen overflow-hidden">
+    <div className="flex flex-col lg:flex-row gap-6 p-4 bg-white/80 dark:bg-primary h-full max-h-screen overflow-hidden">
       {/* Music Player Section */}
       <section className="flex flex-col items-center justify-center lg:w-1/3 lg:max-w-sm shrink-0">
         <div className="w-full max-w-xs">
@@ -494,7 +494,7 @@ export default function MusicPlayer() {
 
         <div className="mt-4 text-center w-full max-w-xs">
           <div className="mb-3 ">
-            <span className="inline-block px-3 py-1 text-xs font-medium border bg-gray-100 border-gray-200 hover:border-primary dark:border-white">Now Playing</span>
+            <span className="inline-block px-3 py-1 text-xs font-medium border bg-primary text-white hover:bg-white hover:text-primary dark:border-white dark:bg-primary dark:text-white dark:hover:bg-white dark:hover:text-primary transition-colors">Now Playing</span>
             <h2 className="mt-2 text-lg font-semibold truncate max-w-full">{songs[current]?.title || "No song selected"}</h2>
           </div>
          
@@ -516,7 +516,7 @@ export default function MusicPlayer() {
             <button
               onClick={prevSong}
               aria-label="Previous"
-              className="px-3 py-2 border border-primary hover:bg-primary hover:text-white dark:border-white dark:hover:bg-white dark:hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium inline-flex items-center gap-1"
+              className="px-3 py-2 border border-primary hover:bg-primary hover:text-white dark:border-white dark:hover:bg-white dark:hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium inline-flex items-center gap-1 cursor-pointer"
               disabled={!isPlayerReady || songs.length === 0}
             >
               <span aria-hidden>⏮</span>
@@ -526,7 +526,7 @@ export default function MusicPlayer() {
               <button
                 onClick={handlePause}
                 aria-label="Pause"
-                className="px-3 py-2 border border-primary hover:bg-primary hover:text-white dark:border-white dark:hover:bg-white dark:hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium inline-flex items-center gap-1"
+                className="px-3 py-2 border border-primary hover:bg-primary hover:text-white dark:border-white dark:hover:bg-white dark:hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium inline-flex items-center gap-1 cursor-pointer"
                 disabled={!isPlayerReady || songs.length === 0}
               >
                 <span aria-hidden>⏸</span>
@@ -536,7 +536,7 @@ export default function MusicPlayer() {
               <button
                 onClick={handlePlay}
                 aria-label="Play"
-                className="px-3 py-2 border border-primary hover:bg-primary hover:text-white dark:border-white dark:hover:bg-white dark:hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium inline-flex items-center gap-1"
+                className="px-3 py-2 border border-primary hover:bg-primary hover:text-white dark:border-white dark:hover:bg-white dark:hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium inline-flex items-center gap-1 cursor-pointer"
                 disabled={!isPlayerReady || songs.length === 0}
               >
                 <span aria-hidden>▶</span>
@@ -547,7 +547,7 @@ export default function MusicPlayer() {
             <button
               onClick={nextSong}
               aria-label="Next"
-              className="px-3 py-2 border border-primary hover:bg-primary hover:text-white dark:border-white dark:hover:bg-white dark:hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium inline-flex items-center gap-1"
+              className="px-3 py-2 border border-primary hover:bg-primary hover:text-white dark:border-white dark:hover:bg-white dark:hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium inline-flex items-center gap-1 cursor-pointer"
               disabled={!isPlayerReady || songs.length === 0}
             >
               <span aria-hidden>⏭</span>
@@ -559,15 +559,15 @@ export default function MusicPlayer() {
       {/* Playlist Management Section */}
       <section className="flex-1 flex flex-col min-h-0">
         {/* Add Song Panel */}
-        <div className="mb-4 border bg-white dark:bg-primary border-primary dark:border-white">
+        <div className="mb-4 border bg-white/80 dark:bg-primary border-primary dark:border-white">
           <div className="flex items-center justify-between px-3 py-2">
             <div>
-              <div className="text-sm font-semibold">Add Song</div>
+              <div className="text-sm font-semibold font-medium">Add Song</div>
               <div className="text-xs opacity-70">Paste a YouTube link to add to the playlist</div>
             </div>
             <button
               onClick={() => setShowAddsong(!showAddsong)} 
-              className="py-1 px-2 bg-primary text-white border border-primary hover:bg-white hover:text-primary dark:bg-white dark:text-primary dark:border-white dark:hover:bg-primary dark:hover:text-white text-sm"
+              className="py-1 px-2 bg-primary text-white font-medium border border-primary hover:bg-white hover:text-primary dark:bg-white dark:text-primary dark:border-white dark:hover:bg-primary dark:hover:text-white text-sm transition-colors cursor-pointer"
             >
               {showAddsong ? "Close" : "Add"}
             </button>
@@ -580,7 +580,7 @@ export default function MusicPlayer() {
                   type="text"
                   id="urlInput"
                   placeholder="e.g. https://youtu.be/xxxxxxxxxxx"
-                  className="p-2 flex-1 bg-white border border-primary dark:bg-primary dark:border-white"
+                  className="p-2 flex-1 bg-white/80 border border-primary dark:bg-primary dark:border-white"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       const input = e.target as HTMLInputElement;
@@ -590,7 +590,7 @@ export default function MusicPlayer() {
                   }}
                 />
                 <button
-                  className="px-4 py-2 transition-colors bg-primary hover:bg-white hover:text-primary border border-primary text-white dark:bg-white dark:hover:bg-primary dark:hover:text-white dark:text-primary dark:border-white"
+                  className="px-4 py-2 transition-colors bg-primary hover:bg-white hover:text-primary border border-primary text-white dark:bg-white dark:hover:bg-primary dark:hover:text-white dark:text-primary dark:border-white cursor-pointer"
                   onClick={() => {
                     const input = document.getElementById("urlInput") as HTMLInputElement;
                     addSong(input.value);
@@ -624,7 +624,7 @@ export default function MusicPlayer() {
             <h2 className="text-lg font-semibold">Playlist</h2>
             <button
               onClick={clearStorage} 
-              className="py-1 px-2 bg-primary text-white border border-primary hover:bg-white hover:text-primary dark:bg-white dark:text-primary dark:border-white dark:hover:bg-primary dark:hover:text-white text-sm disabled:opacity-50"
+              className="py-1 px-2 bg-primary text-white border border-primary hover:bg-white hover:text-primary dark:bg-white dark:text-primary dark:border-white dark:hover:bg-primary dark:hover:text-white text-sm disabled:opacity-50 transition-colors cursor-pointer"
               disabled={songs.length === 0}
             >
               Clear All
@@ -643,10 +643,10 @@ export default function MusicPlayer() {
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, idx)}
                 onDragEnd={handleDragEnd} 
-                className={`flex items-center gap-3 p-3 border cursor-pointer transition-colors flex-wrap sm:flex-nowrap ${
+                className={`flex items-center gap-3 p-3  transition-colors flex-wrap sm:flex-nowrap cursor-pointer ${
                   idx === current
-                    ? "bg-primary text-white dark:bg-white dark:text-primary border-primary dark:border-white"
-                    : "bg-white hover:bg-primary hover:text-white dark:bg-primary dark:hover:bg-white dark:hover:text-primary border-primary dark:border-white"
+                    ? "bg-primary hover:bg-secondary hover:text-white text-white dark:bg-white/80 dark:text-primary"
+                    : "bg-white/80 hover:bg-primary hover:text-white dark:bg-primary dark:hover:bg-white dark:hover:text-primary border-primary dark:border-white"
                 } ${
                   draggedIndex === idx ? "opacity-50" : ""
                 }`}
@@ -677,7 +677,7 @@ export default function MusicPlayer() {
                       e.stopPropagation();
                       deleteSong(idx);
                     }}
-                    className="px-2 py-1 bg-primary text-white border border-primary hover:bg-white hover:text-primary dark:bg-white dark:text-primary dark:border-white dark:hover:bg-primary dark:hover:text-white text-xs transition-colors"
+                    className="px-2 py-1 bg-primary text-white border border-primary hover:bg-white/80 hover:text-primary dark:bg-white/80 dark:text-primary dark:border-white dark:hover:bg-primary dark:hover:text-white text-xs transition-colors cursor-pointer"
                     title="Delete song"
                   >
                     Delete
