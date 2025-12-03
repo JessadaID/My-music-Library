@@ -482,7 +482,7 @@ export default function MusicPlayer() {
   return (
     <div className="flex flex-col lg:flex-row gap-6 p-4 bg-white/80 dark:bg-primary h-full max-h-screen overflow-hidden">
       {/* Music Player Section */}
-      <section className="flex flex-col items-center justify-center lg:w-1/3 lg:max-w-sm shrink-0">
+      <section className="flex flex-col items-center lg:w-1/3 lg:max-w-sm shrink-0">
         <div className="w-full max-w-xs">
           <img
             src={albumArt}
@@ -619,7 +619,7 @@ export default function MusicPlayer() {
         </div>
 
         {/* Playlist with Drag & Drop */}
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-lg font-semibold">Playlist</h2>
             <button
@@ -632,8 +632,7 @@ export default function MusicPlayer() {
           </div>
           
           <ul
-            className="space-y-2 overflow-y-auto overflow-x-hidden pr-1 flex-1"
-            style={{ scrollbarGutter: 'stable' }}
+            className="space-y-2 overflow-y-auto overflow-x-hidden pr-1 flex-1 lg:max-h-[500px]"
           >
             {songs.map((song, idx) => (
               <li
