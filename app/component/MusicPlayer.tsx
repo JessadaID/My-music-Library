@@ -540,7 +540,7 @@ export default function MusicPlayer() {
                 disabled={!isPlayerReady || songs.length === 0}
               >
                 <span aria-hidden>▶</span>
-                <span className="hidden  lg:inline">Play</span>
+                <span className="hidden  lg:inline font-medium">Play</span>
               </button>
             )}
             
@@ -590,7 +590,7 @@ export default function MusicPlayer() {
                   }}
                 />
                 <button
-                  className="px-4 py-2 transition-colors bg-primary hover:bg-white hover:text-primary border border-primary text-white dark:bg-white dark:hover:bg-primary dark:hover:text-white dark:text-primary dark:border-white cursor-pointer"
+                  className="px-4 py-2 transition-colors bg-primary medium hover:bg-white hover:text-primary border border-primary text-white dark:bg-white dark:hover:bg-primary dark:hover:text-white dark:text-primary dark:border-white cursor-pointer"
                   onClick={() => {
                     const input = document.getElementById("urlInput") as HTMLInputElement;
                     addSong(input.value);
@@ -606,7 +606,7 @@ export default function MusicPlayer() {
         </div>
 
         {/* Player Status */}
-        <div className="mb-4 text-sm">
+        <div className="mb-4 text-sm font-medium">
           Player: {isPlayerReady ? "✅ Ready" : "⏳ Loading..."}
           {songs.length > 0 && (
             <span>
@@ -624,7 +624,7 @@ export default function MusicPlayer() {
             <h2 className="text-lg font-semibold">Playlist</h2>
             <button
               onClick={clearStorage} 
-              className="py-1 px-2 bg-primary text-white border border-primary hover:bg-white hover:text-primary dark:bg-white dark:text-primary dark:border-white dark:hover:bg-primary dark:hover:text-white text-sm disabled:opacity-50 transition-colors cursor-pointer"
+              className="py-1 px-2 font-medium bg-primary text-white border border-primary hover:bg-white hover:text-primary dark:bg-white dark:text-primary dark:border-white dark:hover:bg-primary dark:hover:text-white text-sm disabled:opacity-50 transition-colors cursor-pointer"
               disabled={songs.length === 0}
             >
               Clear All
@@ -645,8 +645,8 @@ export default function MusicPlayer() {
                 onDragEnd={handleDragEnd} 
                 className={`flex items-center gap-3 p-3  transition-colors flex-wrap sm:flex-nowrap cursor-pointer ${
                   idx === current
-                    ? "bg-primary hover:bg-secondary hover:text-white text-white dark:bg-white/80 dark:text-primary"
-                    : "bg-white/80 hover:bg-primary hover:text-white dark:bg-primary dark:hover:bg-white dark:hover:text-primary border-primary dark:border-white"
+                    ? "bg-primary hover:bg-black hover:text-white text-white dark:bg-white/80 dark:text-primary dark:hover:bg-white dark:hover:text-primary"
+                    : "bg-white/80 hover:bg-secondary hover:text-white dark:bg-primary dark:hover:bg-secondary dark:hover:text-white border-primary dark:border-white"
                 } ${
                   draggedIndex === idx ? "opacity-50" : ""
                 }`}
@@ -677,7 +677,7 @@ export default function MusicPlayer() {
                       e.stopPropagation();
                       deleteSong(idx);
                     }}
-                    className="px-2 py-1 bg-primary text-white border border-primary hover:bg-white/80 hover:text-primary dark:bg-white/80 dark:text-primary dark:border-white dark:hover:bg-primary dark:hover:text-white text-xs transition-colors cursor-pointer"
+                    className="px-2 py-1 bg-primary text-white font-medium border border-primary hover:bg-white/80 hover:text-primary dark:bg-white/80 dark:text-primary dark:border-white dark:hover:bg-primary dark:hover:text-white text-xs transition-colors cursor-pointer"
                     title="Delete song"
                   >
                     Delete
