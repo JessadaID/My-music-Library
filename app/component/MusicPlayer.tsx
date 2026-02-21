@@ -5,6 +5,7 @@ import { useYouTubePlayer } from "../hooks/useYouTubePlayer";
 import { useMediaSession } from "../hooks/useMediaSession";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { Button } from "./ui/Button";
+import Fuse from "fuse.js";
 
 export default function MusicPlayer() {
   const {
@@ -25,6 +26,10 @@ export default function MusicPlayer() {
     "music_player_show_add_song",
     false
   );
+
+  const [aiQuery, setAiQuery] = useState("");
+  const [isAiThinking, setIsAiThinking] = useState(false);
+  const [aiStatusMessage, setAiStatusMessage] = useState("");
 
   const {
     isPlayerReady,
@@ -128,6 +133,83 @@ export default function MusicPlayer() {
     nextSong,
   });
 
+  // AI Chat handler
+  const handleAgentChat = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!aiQuery.trim()) return;
+
+    setIsAiThinking(true);
+    setAiStatusMessage("กำลังคิด...");
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: aiQuery, songs }), // Send songs for context
+      });
+      const data = await res.json();
+
+      if (data.type === "tool_call" && data.tool_calls) {
+        for (const tool of data.tool_calls) {
+          if (tool.name === "play_music") {
+            const { song_name, artist } = tool.arguments;
+            setAiStatusMessage(`กำลังค้นหาเพลง: ${song_name} ${artist || ''}...`);
+
+            const fuse = new Fuse(songs, {
+              keys: ["title"],
+              threshold: 0.5,
+              ignoreLocation: true,
+              useExtendedSearch: true,
+            });
+            // Try to search with artist and song, or just song if fails
+            let searchResult = fuse.search(`${song_name} ${artist || ''}`);
+            if (searchResult.length === 0 && artist) {
+              // fallback to song name only
+              searchResult = fuse.search(song_name);
+            }
+
+            if (searchResult.length > 0) {
+              const bestMatchIndex = searchResult[0].refIndex;
+              const bestMatch = searchResult[0].item;
+              setAiStatusMessage(`พบเพลง: ${bestMatch.title} ในคิว ดำเนินการเล่น`);
+              playSong(bestMatchIndex);
+            } else {
+              setAiStatusMessage(`ขออภัย ไม่พบเพลง ${song_name} ในคิว (Playlist)`);
+            }
+          } else if (tool.name === "search_and_add_youtube_song") {
+            const { song_name, artist, youtube_id, youtube_title } = tool.arguments;
+            if (youtube_id) {
+              setAiStatusMessage(`กำลังค้นหาและเพิ่มเพลง: ${youtube_title || song_name}...`);
+              addSong(`https://youtube.com/watch?v=${youtube_id}`, (id) => {
+                const newIndex = songs.length; // It will be added to the end
+                setTimeout(() => {
+                  setAiStatusMessage(`เพิ่มเพลง ${youtube_title || song_name} ลงคิวและกำลังเล่น`);
+                  // We need to wait for state to update, or just use loadVideo and let player handle it.
+                  loadVideo(id);
+                  setCurrent(newIndex);
+                }, 500);
+              });
+            } else {
+              setAiStatusMessage(`ขออภัย ไม่พบข้อมูลเพลง ${song_name} บน YouTube`);
+            }
+          }
+        }
+
+        setTimeout(() => setAiStatusMessage(""), 4000);
+      } else {
+        setAiStatusMessage(data.content || "รับทราบครับ");
+        setTimeout(() => setAiStatusMessage(""), 4000);
+      }
+    } catch (err) {
+      console.error(err);
+      setAiStatusMessage("เกิดข้อผิดพลาดในการเชื่อมต่อ AI");
+      setTimeout(() => setAiStatusMessage(""), 4000);
+    } finally {
+      setIsAiThinking(false);
+      setAiQuery("");
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-6 p-4 bg-white/80 dark:bg-primary h-full max-h-screen overflow-hidden">
       {/* Music Player Section */}
@@ -212,6 +294,63 @@ export default function MusicPlayer() {
 
       {/* Playlist Management Section */}
       <section className="flex-1 flex flex-col min-h-0">
+        {/* AI Chat Section */}
+        <div className="mb-4 border bg-white/80 dark:bg-primary border-primary dark:border-white overflow-visible shadow-sm relative">
+          <div className="bg-primary text-white dark:bg-white dark:text-primary px-3 py-2 text-sm font-semibold flex items-center justify-between group cursor-help relative">
+            <span className="flex items-center gap-2">
+              ✨ AI Assistant <span className="text-xs font-normal opacity-70 hidden sm:inline">(Hover ดูความสามารถ)</span>
+            </span>
+
+            <div className="absolute top-full left-0 z-50 hidden group-hover:block mt-1 w-full sm:w-[400px]">
+              <div className="bg-black/90 text-white p-3 text-xs shadow-xl border border-white/20 whitespace-normal leading-relaxed">
+                <p className="font-bold mb-1 text-primary-foreground">ความสามารถของ AI:</p>
+                <ul className="list-disc pl-4 space-y-1 opacity-90">
+                  <li>เล่นเพลงจากคิว (เช่น "เปิดเพลง Shape of you")</li>
+                  <li>ค้นหาและเพิ่มเพลงจาก YouTube อัตโนมัติ (เช่น "หาเพลง diet pepsi ให้หน่อย")</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div className="p-3">
+            <form onSubmit={handleAgentChat} className="flex flex-col gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  value={aiQuery}
+                  onChange={(e) => setAiQuery(e.target.value)}
+                  placeholder="ลองสั่ง AI เช่น 'เปิดเพลง Shape of You หน่อย'"
+                  className="p-2 flex-1 bg-white border border-primary dark:bg-primary dark:border-white focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                  disabled={isAiThinking}
+                />
+                <Button type="submit" disabled={isAiThinking || !aiQuery.trim()}>
+                  {isAiThinking ? "กำลังคิด..." : "ส่งคำสั่ง"}
+                </Button>
+              </div>
+              <div className="flex gap-2 mt-1">
+                <button
+                  type="button"
+                  onClick={() => setAiQuery("เพิ่มเพลง ")}
+                  className="text-[10px] px-2 py-1 border border-primary/30 dark:border-white/30 text-primary dark:text-white rounded hover:bg-primary/10 dark:hover:bg-white/10 transition-colors"
+                >
+                  เพิ่มเพลง...
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAiQuery("เปิดเพลง ")}
+                  className="text-[10px] px-2 py-1 border border-primary/30 dark:border-white/30 text-primary dark:text-white rounded hover:bg-primary/10 dark:hover:bg-white/10 transition-colors"
+                >
+                  เปิดเพลง...
+                </button>
+              </div>
+              {aiStatusMessage && (
+                <div className="text-xs px-3 py-2 border border-dashed border-primary dark:border-white text-primary dark:text-white mt-1 animate-pulse bg-primary/5 dark:bg-white/5 font-medium transition-all">
+                  {aiStatusMessage}
+                </div>
+              )}
+            </form>
+          </div>
+        </div>
+
         <div className="mb-4 border bg-white/80 dark:bg-primary border-primary dark:border-white">
           <div className="flex items-center justify-between px-3 py-2">
             <div>
