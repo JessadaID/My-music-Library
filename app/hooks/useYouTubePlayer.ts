@@ -1,0 +1,189 @@
+import { useRef, useState, useEffect, useCallback } from "react";
+
+interface Song {
+    id: string;
+    title: string;
+    thumbnail: string;
+    url: string;
+}
+
+export function useYouTubePlayer(
+    songs: Song[],
+    current: number,
+    setCurrent: (index: number) => void
+) {
+    const playerRef = useRef<any>(null);
+    const intervalRef = useRef<any>(null);
+    const isAutoPlayingRef = useRef(false);
+
+    const [isPlayerReady, setIsPlayerReady] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [duration, setDuration] = useState(0);
+
+    // Helper to fetch latest state
+    const getCurrentState = useCallback(() => {
+        return { currentSongs: songs, currentIndex: current };
+    }, [songs, current]);
+
+    // Load YouTube API
+    useEffect(() => {
+        if ((window as any).YT) {
+            if (!isPlayerReady) initializePlayer();
+            return;
+        }
+
+        const tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.body.appendChild(tag);
+
+        (window as any).onYouTubeIframeAPIReady = initializePlayer;
+
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        };
+    }, []);
+
+    const initializePlayer = () => {
+        playerRef.current = new (window as any).YT.Player("player", {
+            height: "0",
+            width: "0",
+            playerVars: {
+                controls: 0,
+                autoplay: 0,
+                enablejsapi: 1,
+                rel: 0,
+            },
+            events: {
+                onReady: () => {
+                    setIsPlayerReady(true);
+                    const { currentSongs, currentIndex } = getCurrentState();
+                    if (currentSongs.length > 0 && currentSongs[currentIndex]) {
+                        setTimeout(() => {
+                            playerRef.current?.cueVideoById(currentSongs[currentIndex].id);
+                        }, 500);
+                    }
+                },
+                onStateChange: (event: any) => {
+                    if (event.data === 1) { // Playing
+                        setIsPlaying(true);
+                        setDuration(playerRef.current.getDuration());
+                        intervalRef.current = setInterval(() => {
+                            setProgress(playerRef.current.getCurrentTime());
+                        }, 1000);
+                    } else if (event.data === 2) { // Paused
+                        setIsPlaying(false);
+                        clearInterval(intervalRef.current);
+                    } else if (event.data === 0) { // Ended
+                        setIsPlaying(false);
+                        clearInterval(intervalRef.current);
+                        setProgress(0);
+                        setTimeout(() => {
+                            playNextSong();
+                        }, 1000);
+                    }
+                },
+                onError: (event: any) => {
+                    console.error("YouTube Player Error:", event.data);
+                    isAutoPlayingRef.current = false;
+                    setTimeout(() => {
+                        playNextSong();
+                    }, 2000);
+                },
+            },
+        });
+    };
+
+    const playNextSong = useCallback(() => {
+        const { currentSongs, currentIndex } = getCurrentState();
+
+        if (isAutoPlayingRef.current) return;
+        if (currentSongs.length === 0) return;
+
+        isAutoPlayingRef.current = true;
+        try {
+            let nextIndex;
+            if (currentSongs.length === 1) {
+                nextIndex = 0;
+            } else {
+                nextIndex = (currentIndex + 1) % currentSongs.length;
+            }
+
+            setCurrent(nextIndex);
+            const nextSong = currentSongs[nextIndex];
+
+            if (playerRef.current && nextSong) {
+                playerRef.current.loadVideoById(nextSong.id);
+            }
+
+            setTimeout(() => {
+                isAutoPlayingRef.current = false;
+            }, 2000);
+        } catch (error) {
+            console.error("Error in playNextSong:", error);
+            isAutoPlayingRef.current = false;
+        }
+    }, [getCurrentState, setCurrent]);
+
+    const loadVideo = (id: string) => {
+        if (playerRef.current && isPlayerReady) {
+            isAutoPlayingRef.current = false;
+            playerRef.current.loadVideoById(id);
+        }
+    };
+
+    const playVideo = () => {
+        if (playerRef.current && isPlayerReady) {
+            playerRef.current.playVideo();
+        }
+    };
+
+    const pauseVideo = () => {
+        if (playerRef.current && isPlayerReady) {
+            playerRef.current.pauseVideo();
+        }
+    };
+
+    const stopVideo = () => {
+        if (playerRef.current && isPlayerReady) {
+            playerRef.current.stopVideo();
+            setIsPlaying(false);
+            setProgress(0);
+            clearInterval(intervalRef.current);
+        }
+    };
+
+    const seekTo = (seconds: number) => {
+        setProgress(seconds);
+        if (playerRef.current && isPlayerReady) {
+            playerRef.current.seekTo(seconds, true);
+        }
+    };
+
+    const getVideoData = () => {
+        if (playerRef.current && isPlayerReady) {
+            return playerRef.current.getVideoData();
+        }
+        return null;
+    }
+
+    return {
+        isPlayerReady,
+        isPlaying,
+        setIsPlaying,
+        progress,
+        setProgress,
+        duration,
+        setDuration,
+        playerRef,
+        intervalRef,
+        loadVideo,
+        playVideo,
+        pauseVideo,
+        stopVideo,
+        seekTo,
+        getVideoData
+    };
+}
