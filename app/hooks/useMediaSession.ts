@@ -66,7 +66,7 @@ export function useMediaSession(
                 anyNavigator.mediaSession.setPositionState({
                     duration,
                     playbackRate: 1,
-                    position: progress || 0
+                    position: Math.min(Math.max(0, progress || 0), duration)
                 });
             }
         } catch (e) {
