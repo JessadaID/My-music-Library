@@ -14,9 +14,8 @@
 - **Framework**: Next.js 15
 - **Frontend Application**: React 19
 - **การออกแบบ UI**: Tailwind CSS v4
-- **AI Provider**: Groq SDK (โมเดลอ้างอิง Llama 3.3)
+- **AI Provider**: Groq SDK
 - **เครื่องมือเชื่อมต่อระบบภายนอก**: yt-search สำหรับค้นหาวิดีโอจาก YouTube
-- **จัดการระดับฐานข้อมูล**: Mongoose (อ้างอิง MongoDB)
 
 ## การติดตั้งและเตรียมความพร้อม
 
