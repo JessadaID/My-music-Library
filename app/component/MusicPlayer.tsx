@@ -158,7 +158,7 @@ export default function MusicPlayer() {
               type="range"
               min={0}
               max={duration || 0}
-              value={progress}
+              value={progress || 0}
               onChange={handleSeek}
               className="flex-1 accent-primary dark:accent-white range"
               disabled={!isPlayerReady || songs.length === 0}
@@ -297,8 +297,8 @@ export default function MusicPlayer() {
                 onDrop={(e) => handleDrop(e, idx)}
                 onDragEnd={handleDragEnd}
                 className={`flex items-center gap-3 p-3 transition-colors flex-wrap sm:flex-nowrap cursor-pointer ${idx === current
-                    ? "bg-primary hover:bg-black hover:text-white text-white dark:bg-white/80 dark:text-primary dark:hover:bg-white dark:hover:text-primary"
-                    : "bg-white/80 hover:bg-secondary hover:text-white dark:bg-primary dark:hover:bg-secondary dark:hover:text-white border-primary dark:border-white"
+                  ? "bg-primary hover:bg-black hover:text-white text-white dark:bg-white/80 dark:text-primary dark:hover:bg-white dark:hover:text-primary"
+                  : "bg-white/80 hover:bg-secondary hover:text-white dark:bg-primary dark:hover:bg-secondary dark:hover:text-white border-primary dark:border-white"
                   } ${draggedIndex === idx ? "opacity-50" : ""}`}
                 onClick={() => playSong(idx)}
               >

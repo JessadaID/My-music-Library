@@ -21,10 +21,16 @@ export function useYouTubePlayer(
     const [progress, setProgress] = useState(0);
     const [duration, setDuration] = useState(0);
 
-    // Helper to fetch latest state
-    const getCurrentState = useCallback(() => {
-        return { currentSongs: songs, currentIndex: current };
-    }, [songs, current]);
+    const songsRef = useRef(songs);
+    const currentRef = useRef(current);
+
+    useEffect(() => {
+        songsRef.current = songs;
+    }, [songs]);
+
+    useEffect(() => {
+        currentRef.current = current;
+    }, [current]);
 
     // Load YouTube API
     useEffect(() => {
@@ -59,7 +65,8 @@ export function useYouTubePlayer(
             events: {
                 onReady: () => {
                     setIsPlayerReady(true);
-                    const { currentSongs, currentIndex } = getCurrentState();
+                    const currentSongs = songsRef.current;
+                    const currentIndex = currentRef.current;
                     if (currentSongs.length > 0 && currentSongs[currentIndex]) {
                         setTimeout(() => {
                             playerRef.current?.cueVideoById(currentSongs[currentIndex].id);
@@ -69,9 +76,9 @@ export function useYouTubePlayer(
                 onStateChange: (event: any) => {
                     if (event.data === 1) { // Playing
                         setIsPlaying(true);
-                        setDuration(playerRef.current.getDuration());
+                        setDuration(playerRef.current?.getDuration() || 0);
                         intervalRef.current = setInterval(() => {
-                            setProgress(playerRef.current.getCurrentTime());
+                            setProgress(playerRef.current?.getCurrentTime() || 0);
                         }, 1000);
                     } else if (event.data === 2) { // Paused
                         setIsPlaying(false);
@@ -97,7 +104,8 @@ export function useYouTubePlayer(
     };
 
     const playNextSong = useCallback(() => {
-        const { currentSongs, currentIndex } = getCurrentState();
+        const currentSongs = songsRef.current;
+        const currentIndex = currentRef.current;
 
         if (isAutoPlayingRef.current) return;
         if (currentSongs.length === 0) return;
@@ -106,7 +114,7 @@ export function useYouTubePlayer(
         try {
             let nextIndex;
             if (currentSongs.length === 1) {
-                nextIndex = 0;
+                nextIndex = currentIndex;
             } else {
                 nextIndex = (currentIndex + 1) % currentSongs.length;
             }
@@ -115,7 +123,12 @@ export function useYouTubePlayer(
             const nextSong = currentSongs[nextIndex];
 
             if (playerRef.current && nextSong) {
-                playerRef.current.loadVideoById(nextSong.id);
+                if (currentSongs.length === 1) {
+                    playerRef.current.seekTo(0, true);
+                    playerRef.current.playVideo();
+                } else {
+                    playerRef.current.loadVideoById(nextSong.id);
+                }
             }
 
             setTimeout(() => {
@@ -125,7 +138,7 @@ export function useYouTubePlayer(
             console.error("Error in playNextSong:", error);
             isAutoPlayingRef.current = false;
         }
-    }, [getCurrentState, setCurrent]);
+    }, [setCurrent]);
 
     const loadVideo = (id: string) => {
         if (playerRef.current && isPlayerReady) {
