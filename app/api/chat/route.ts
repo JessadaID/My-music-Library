@@ -150,10 +150,9 @@ IMPORTANT: Do not wrap tool calls in xml or markdown. Only return the tool call.
                 console.warn("Groq tool_use_failed caught, attempting manual parse");
                 const failedGen = groqError.error.failed_generation;
 
-                // Attempt to extract XML-like tool call if present (e.g. <function=play_music>{"song_name": "..."}</function>)
-                const match = failedGen.match(/<function=(\w+)(?:.*?|)>([\s\S]*?)<\/function>/i) ||
+                const match = failedGen.match(/<function=(\w+)[^\{]*(\{[\s\S]*?\})[^<]*<\/function>/i) ||
                     failedGen.match(/<tool_call>\n*{"name":\s*"([^"]+)",\s*"arguments":\s*({[^}]+})}\n*<\/tool_call>/i) ||
-                    failedGen.match(/<function=(\w+)[^\{]*(\{[\s\S]*?\})\s*<\/function>/i);
+                    failedGen.match(/<function=(\w+)(?:.*?|)>([\s\S]*?)<\/function>/i);
 
                 if (match) {
                     const toolName = match[1];

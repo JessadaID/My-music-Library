@@ -1,14 +1,7 @@
-import type { Config } from 'tailwindcss';
+import type { NextConfig } from "next";
 
-const config: Config = {
-  content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
-  
-  darkMode: "class",
-  plugins: [],
+const nextConfig: NextConfig = {
+  serverExternalPackages: ["yt-search", "cheerio"],
 };
 
-export default config;
+export default nextConfig;
