@@ -26,6 +26,7 @@ export default function MusicPlayer() {
     "music_player_show_add_song",
     false
   );
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const [aiQuery, setAiQuery] = useState("");
   const [isAiThinking, setIsAiThinking] = useState(false);
@@ -294,63 +295,6 @@ export default function MusicPlayer() {
 
       {/* Playlist Management Section */}
       <section className="flex-1 flex flex-col min-h-0">
-        {/* AI Chat Section */}
-        <div className="mb-4 border bg-white/80 dark:bg-primary border-primary dark:border-white overflow-visible shadow-sm relative">
-          <div className="bg-primary text-white dark:bg-white dark:text-primary px-3 py-2 text-sm font-semibold flex items-center justify-between group cursor-help relative">
-            <span className="flex items-center gap-2">
-              ✨ AI Assistant <span className="text-xs font-normal opacity-70 hidden sm:inline">(Hover ดูความสามารถ)</span>
-            </span>
-
-            <div className="absolute top-full left-0 z-50 hidden group-hover:block mt-1 w-full sm:w-[400px]">
-              <div className="bg-black/90 text-white p-3 text-xs shadow-xl border border-white/20 whitespace-normal leading-relaxed">
-                <p className="font-bold mb-1 text-primary-foreground">ความสามารถของ AI:</p>
-                <ul className="list-disc pl-4 space-y-1 opacity-90">
-                  <li>เล่นเพลงจากคิว (เช่น "เปิดเพลง Shape of you")</li>
-                  <li>ค้นหาและเพิ่มเพลงจาก YouTube อัตโนมัติ (เช่น "หาเพลง diet pepsi ให้หน่อย")</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div className="p-3">
-            <form onSubmit={handleAgentChat} className="flex flex-col gap-2">
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="text"
-                  value={aiQuery}
-                  onChange={(e) => setAiQuery(e.target.value)}
-                  placeholder="ลองสั่ง AI เช่น 'เปิดเพลง Shape of You หน่อย'"
-                  className="p-2 flex-1 bg-white border border-primary dark:bg-primary dark:border-white focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-                  disabled={isAiThinking}
-                />
-                <Button type="submit" disabled={isAiThinking || !aiQuery.trim()}>
-                  {isAiThinking ? "กำลังคิด..." : "ส่งคำสั่ง"}
-                </Button>
-              </div>
-              <div className="flex gap-2 mt-1">
-                <button
-                  type="button"
-                  onClick={() => setAiQuery("เพิ่มเพลง ")}
-                  className="text-[10px] px-2 py-1 border border-primary/30 dark:border-white/30 text-primary dark:text-white rounded hover:bg-primary/10 dark:hover:bg-white/10 transition-colors"
-                >
-                  เพิ่มเพลง...
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAiQuery("เปิดเพลง ")}
-                  className="text-[10px] px-2 py-1 border border-primary/30 dark:border-white/30 text-primary dark:text-white rounded hover:bg-primary/10 dark:hover:bg-white/10 transition-colors"
-                >
-                  เปิดเพลง...
-                </button>
-              </div>
-              {aiStatusMessage && (
-                <div className="text-xs px-3 py-2 border border-dashed border-primary dark:border-white text-primary dark:text-white mt-1 animate-pulse bg-primary/5 dark:bg-white/5 font-medium transition-all">
-                  {aiStatusMessage}
-                </div>
-              )}
-            </form>
-          </div>
-        </div>
-
         <div className="mb-4 border bg-white/80 dark:bg-primary border-primary dark:border-white">
           <div className="flex items-center justify-between px-3 py-2">
             <div>
@@ -484,11 +428,121 @@ export default function MusicPlayer() {
             </div>
           )}
         </div>
-      </section>
+      </section >
 
       <section>
         <div id="player" style={{ display: "none" }}></div>
       </section>
-    </div>
+
+      {/* Floating AI Chat Button */}
+      {!isChatOpen && (
+        <button
+          onClick={() => setIsChatOpen(true)}
+          className="fixed bottom-6 right-6 z-40 bg-primary text-white dark:bg-white dark:text-primary px-5 py-2 shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-3 group border border-primary/20 dark:border-white/20 hover:bg-black dark:hover:bg-gray-200"
+        >
+          <span className="text-2xl animate-pulse">✨</span>
+          <span className="font-bold whitespace-nowrap hidden sm:inline tracking-wide uppercase text-sm">
+            AI Assistant
+          </span>
+        </button>
+      )}
+
+      {/* AI Chat Sidebar Overlay (for mobile so it closes when clicking outside) */}
+      {
+        isChatOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm lg:hidden transition-opacity"
+            onClick={() => setIsChatOpen(false)}
+          />
+        )
+      }
+
+      {/* AI Chat Sidebar */}
+      <div
+        className={`fixed inset-y-0 right-0 w-[340px] sm:w-[420px] bg-white/95 dark:bg-primary/95 backdrop-blur-sm border-l-4 border-primary dark:border-white shadow-[-10px_0_20px_rgba(0,0,0,0.1)] z-50 flex flex-col transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${isChatOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+      >
+        {/* Sidebar Header */}
+        <div className="bg-primary text-white dark:bg-white dark:text-primary px-4 py-4 text-base font-bold flex items-center justify-between border-b border-primary/20 dark:border-white/20">
+          <span className="flex items-center gap-3 uppercase tracking-wider text-sm">
+            <span className="text-xl">✨</span> AI Assistant
+          </span>
+          <button
+            onClick={() => setIsChatOpen(false)}
+            className="w-8 h-8 flex items-center justify-center border border-transparent hover:border-white hover:bg-white/10 dark:hover:border-primary dark:hover:bg-primary/10 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Sidebar Chat Content / History Area */}
+        <div className="flex-1 p-4 overflow-y-auto w-full flex flex-col gap-4 custom-scrollbar">
+          <div className="bg-white dark:bg-primary p-4 border border-primary dark:border-white text-sm">
+            <p className="font-bold mb-3 text-primary dark:text-white flex items-center gap-2 uppercase tracking-wide">
+              <span>💡</span> ความสามารถของ AI
+            </p>
+            <ul className="list-disc pl-5 space-y-2 text-primary dark:text-white/90">
+              <li>เล่นเพลงจากคิว: <span className="opacity-70 text-xs block mt-0.5">"เปิดเพลง Shape of you"</span></li>
+              <li>ค้นหาเพลย์ลิสต์ใหม่: <span className="opacity-70 text-xs block mt-0.5">"หาเพลง diet pepsi ให้หน่อย"</span></li>
+            </ul>
+          </div>
+
+          <div className="flex-1"></div>
+
+          {/* Assistant Status Bubble */}
+          <div className={`transition-all duration-300 transform origin-bottom ${aiStatusMessage ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4 pointer-events-none'}`}>
+            <div className={`p-4 font-medium flex items-start gap-3 w-fit max-w-[95%] ml-auto border ${isAiThinking
+              ? "bg-primary text-white dark:bg-white dark:text-primary border-primary dark:border-white animate-pulse"
+              : "bg-white text-primary border-primary dark:bg-primary dark:text-white dark:border-white"
+              }`}>
+              {!isAiThinking && aiStatusMessage && <span className="mt-0.5 text-lg flex-shrink-0">✨</span>}
+              <div className="flex-1 leading-relaxed text-sm">
+                {aiStatusMessage || "พร้อมรับคำสั่ง..."}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar Input Area */}
+        <div className="p-4 border-t border-primary dark:border-white bg-white/80 dark:bg-primary/80 backdrop-blur-sm">
+          <form onSubmit={handleAgentChat} className="flex flex-col gap-3 max-w-full">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setAiQuery("เพิ่มเพลง ")}
+                className="text-xs px-3 py-1 border border-primary dark:border-white text-primary dark:text-white hover:bg-primary hover:text-white dark:hover:bg-white dark:hover:text-primary transition-all active:scale-95 bg-transparent uppercase tracking-wider"
+              >
+                เพิ่มเพลง...
+              </button>
+              <button
+                type="button"
+                onClick={() => setAiQuery("เปิดเพลง ")}
+                className="text-xs px-3 py-1 border border-primary dark:border-white text-primary dark:text-white hover:bg-primary hover:text-white dark:hover:bg-white dark:hover:text-primary transition-all active:scale-95 bg-transparent uppercase tracking-wider"
+              >
+                เปิดเพลง...
+              </button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={aiQuery}
+                onChange={(e) => setAiQuery(e.target.value)}
+                placeholder="ลองสั่ง AI เช่น 'เปิดเพลง Shape of Youหน่อย'"
+                className="px-4 py-3 flex-1 min-w-0 bg-white border border-primary dark:bg-primary dark:border-white focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm text-primary dark:text-white transition-all w-full placeholder:opacity-50"
+                disabled={isAiThinking}
+              />
+              <Button
+                type="submit"
+                disabled={isAiThinking || !aiQuery.trim()}
+                className="px-6 border border-primary dark:border-white active:scale-95 transition-all outline-none rounded-none w-full sm:w-auto mt-2 sm:mt-0"
+              >
+                {isAiThinking ? "กำลังคิด..." : "ส่งคำสั่ง"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div >
   );
 }
