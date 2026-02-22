@@ -10,7 +10,16 @@ import Fuse from "fuse.js";
 
 export default function MusicPlayer() {
   const {
-    songs,
+    playlists,
+    activePlaylist,
+    activePlaylistId,
+    setActivePlaylistId,
+    playingPlaylistId,
+    setPlayingPlaylistId,
+    createNewPlaylist,
+    deletePlaylist,
+    songs, // The songs visible in the current tab
+    playingSongs, // The songs actively queued in the player
     current,
     setCurrent,
     draggedIndex,
@@ -46,28 +55,40 @@ export default function MusicPlayer() {
     stopVideo,
     seekTo,
     getVideoData,
-  } = useYouTubePlayer(songs, current, setCurrent);
+  } = useYouTubePlayer(playingSongs, current, setCurrent);
 
   const albumArt =
-    songs[current]?.thumbnail ||
+    playingSongs[current]?.thumbnail ||
     "https://static.standard.co.uk/s3fs-public/thumbnails/image/2019/03/05/11/sei26139543-1-0.jpg?quality=75&auto=webp&width=960";
 
   // Playback control functions
-  const playSong = (index: number) => {
-    if (!isPlayerReady || songs.length === 0) return;
-    loadVideo(songs[index].id);
+  const playSong = (index: number, playlistIdToPlay: string = playingPlaylistId) => {
+    // If playing from a new playlist, switch to it
+    if (playlistIdToPlay !== playingPlaylistId) {
+      setPlayingPlaylistId(playlistIdToPlay);
+      // Wait for state to settle then play (using the context of the active playlist)
+      const targetSongs = playlists.find(p => p.id === playlistIdToPlay)?.songs || [];
+      if (targetSongs.length > 0) {
+        loadVideo(targetSongs[index].id);
+        setCurrent(index);
+      }
+      return;
+    }
+
+    if (!isPlayerReady || playingSongs.length === 0) return;
+    loadVideo(playingSongs[index].id);
     setCurrent(index);
   };
 
   const nextSong = () => {
-    if (songs.length === 0) return;
-    const next = (current + 1) % songs.length;
+    if (playingSongs.length === 0) return;
+    const next = (current + 1) % playingSongs.length;
     playSong(next);
   };
 
   const prevSong = () => {
-    if (songs.length === 0) return;
-    const prev = (current - 1 + songs.length) % songs.length;
+    if (playingSongs.length === 0) return;
+    const prev = (current - 1 + playingSongs.length) % playingSongs.length;
     playSong(prev);
   };
 
@@ -79,9 +100,9 @@ export default function MusicPlayer() {
 
   const handlePlay = () => {
     if (!isPlayerReady) return;
-    if (songs.length > 0) {
+    if (playingSongs.length > 0) {
       const videoData = getVideoData();
-      if (!videoData || !videoData.video_id || videoData.video_id !== songs[current].id) {
+      if (!videoData || !videoData.video_id || videoData.video_id !== playingSongs[current]?.id) {
         playSong(current);
       } else {
         playVideo();
@@ -128,7 +149,7 @@ export default function MusicPlayer() {
   };
 
   // Setup Media Session API
-  useMediaSession(songs[current], isPlaying, duration, progress, {
+  useMediaSession(playingSongs[current], isPlaying, duration, progress, {
     handlePlay,
     handlePause,
     prevSong,
@@ -176,7 +197,7 @@ export default function MusicPlayer() {
               const bestMatchIndex = searchResult[0].refIndex;
               const bestMatch = searchResult[0].item;
               finalReply += `🎵 พบเพลง: ${bestMatch.title} ในคิว ดำเนินการเล่น\n`;
-              playSong(bestMatchIndex);
+              playSong(bestMatchIndex, activePlaylistId);
             } else {
               finalReply += `❌ ขออภัย ไม่พบเพลง ${song_name} ในคิว (Playlist)\n`;
             }
@@ -219,7 +240,7 @@ export default function MusicPlayer() {
           <div className="w-full aspect-video relative">
             <img
               src={albumArt}
-              alt={songs[current]?.title || "Album Art"}
+              alt={playingSongs[current]?.title || "Album Art"}
               className="w-full h-full object-cover"
             />
           </div>
@@ -231,8 +252,9 @@ export default function MusicPlayer() {
               Now Playing
             </span>
             <h2 className="mt-2 text-lg font-semibold truncate max-w-full">
-              {songs[current]?.title || "No song selected"}
+              {playingSongs[current]?.title || "No song selected"}
             </h2>
+            <p className="text-gray-500 line-clamp-1">{playingPlaylistId === activePlaylistId ? activePlaylist?.name : playlists.find(p => p.id === playingPlaylistId)?.name}</p>
           </div>
 
           <div className="flex items-center gap-2 text-sm">
@@ -244,7 +266,7 @@ export default function MusicPlayer() {
               value={progress || 0}
               onChange={handleSeek}
               className="flex-1 accent-primary dark:accent-white range"
-              disabled={!isPlayerReady || songs.length === 0}
+              disabled={!isPlayerReady || playingSongs.length === 0}
             />
             <span className="min-w-12">{formatTime(duration)}</span>
           </div>
@@ -253,7 +275,7 @@ export default function MusicPlayer() {
             <Button
               variant="icon"
               onClick={prevSong}
-              disabled={!isPlayerReady || songs.length === 0}
+              disabled={!isPlayerReady || playingSongs.length === 0}
               aria-label="Previous"
             >
               <span aria-hidden>⏮</span>
@@ -263,7 +285,7 @@ export default function MusicPlayer() {
               <Button
                 variant="icon"
                 onClick={handlePause}
-                disabled={!isPlayerReady || songs.length === 0}
+                disabled={!isPlayerReady || playingSongs.length === 0}
                 aria-label="Pause"
               >
                 <span aria-hidden>⏸</span>
@@ -273,7 +295,7 @@ export default function MusicPlayer() {
               <Button
                 variant="icon"
                 onClick={handlePlay}
-                disabled={!isPlayerReady || songs.length === 0}
+                disabled={!isPlayerReady || playingSongs.length === 0}
                 aria-label="Play"
               >
                 <span aria-hidden>▶</span>
@@ -284,7 +306,7 @@ export default function MusicPlayer() {
             <Button
               variant="icon"
               onClick={nextSong}
-              disabled={!isPlayerReady || songs.length === 0}
+              disabled={!isPlayerReady || playingSongs.length === 0}
               aria-label="Next"
             >
               <span aria-hidden>⏭</span>
@@ -348,19 +370,57 @@ export default function MusicPlayer() {
 
         <div className="mb-4 text-sm font-medium">
           Player: {isPlayerReady ? "✅ Ready" : "⏳ Loading..."}
-          {songs.length > 0 && (
+          {playingSongs.length > 0 && ( // Changed from songs to playingSongs
             <span>
               {" "}
-              | Songs: {songs.length} | Playing: {current + 1}/{songs.length} -{" "}
-              {songs[current]?.title || "None"}
-              {songs.length === 1 && " (Repeat Mode)"}
+              | Songs: {playingSongs.length} | Playing: {current + 1}/{playingSongs.length} -{" "}
+              {playingSongs[current]?.title || "None"}
+              {playingSongs.length === 1 && " (Repeat Mode)"}
             </span>
           )}
         </div>
 
         <div className="flex-1 flex flex-col min-h-0">
+          {/* Playlist Tabs */}
+          <div className="flex items-center gap-2 mb-4 overflow-x-auto custom-scrollbar pb-2">
+            {playlists.map((playlist) => (
+              <div
+                key={playlist.id}
+                className="flex items-center shrink-0"
+              >
+                <button
+                  onClick={() => setActivePlaylistId(playlist.id)}
+                  className={`px-4 py-2 text-sm font-bold border transition-all ${activePlaylistId === playlist.id
+                    ? "bg-primary text-white border-primary dark:bg-white dark:text-primary dark:border-white"
+                    : "bg-white text-primary border-primary/20 hover:bg-primary/5 dark:bg-black dark:text-white dark:border-white/20 dark:hover:bg-white/5"
+                    }`}
+                >
+                  {playlist.name}
+                </button>
+                {activePlaylistId === playlist.id && playlists.length > 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deletePlaylist(playlist.id);
+                    }}
+                    className="px-2 py-2 text-sm border border-l-0 bg-red-50 text-red-600 border-primary/20 hover:bg-red-100 dark:bg-red-950/20 dark:text-red-400 dark:border-white/20 transition-all font-bold"
+                    aria-label="Delete playlist"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              onClick={createNewPlaylist}
+              className="px-3 py-2 text-sm font-bold border border-primary/20 text-primary hover:bg-primary/5 dark:border-white/20 dark:text-white dark:hover:bg-white/5 bg-white dark:bg-black transition-all shrink-0 flex items-center gap-1"
+            >
+              <span>+</span> ใหม่
+            </button>
+          </div>
+
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-semibold">Playlist</h2>
+            <h2 className="text-lg font-semibold">{activePlaylist?.name || "Playlist"}</h2>
             <Button
               variant="ghost"
               onClick={handleClearAll}
@@ -373,17 +433,20 @@ export default function MusicPlayer() {
           <ul className="space-y-2 overflow-y-auto overflow-x-hidden pr-1 flex-1 lg:max-h-[500px]">
             {songs.map((song, idx) => (
               <li
-                key={idx}
+                key={song.id} // Changed key to song.id for better stability
                 draggable
                 onDragStart={(e) => handleDragStart(e, idx)}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, idx)}
                 onDragEnd={handleDragEnd}
-                className={`flex items-center gap-3 p-3 transition-colors flex-wrap sm:flex-nowrap cursor-pointer ${idx === current
+                onClick={() => {
+                  setPlayingPlaylistId(activePlaylistId); // Set playing playlist to active playlist
+                  playSong(idx, activePlaylistId); // Play the song from the active playlist
+                }}
+                className={`flex items-center gap-3 p-3 transition-colors flex-wrap sm:flex-nowrap cursor-pointer ${activePlaylistId === playingPlaylistId && idx === current
                   ? "bg-primary hover:bg-black hover:text-white text-white dark:bg-white/80 dark:text-primary dark:hover:bg-white dark:hover:text-primary"
                   : "bg-white/80 hover:bg-secondary hover:text-white dark:bg-primary dark:hover:bg-secondary dark:hover:text-white border-primary dark:border-white"
                   } ${draggedIndex === idx ? "opacity-50" : ""}`}
-                onClick={() => playSong(idx)}
               >
                 <div className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing shrink-0">
                   ⋮⋮
