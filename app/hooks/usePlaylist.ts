@@ -85,11 +85,13 @@ export function usePlaylist() {
     const playingPlaylist = playlists.find(p => p.id === playingPlaylistId) || activePlaylist;
     const playingSongs = playingPlaylist?.songs || [];
 
-    const updateActivePlaylistSongs = (updater: (prevSongs: Song[]) => Song[]) => {
-        if (!activePlaylist) return;
+    const updatePlaylistSongs = (playlistId: string | undefined, updater: (prevSongs: Song[]) => Song[]) => {
+        const targetId = playlistId || activePlaylistId;
+        if (!targetId) return;
+
         setPlaylists(prevPlaylists =>
             prevPlaylists.map(playlist => {
-                if (playlist.id === activePlaylist.id) {
+                if (playlist.id === targetId) {
                     return { ...playlist, songs: updater(playlist.songs) };
                 }
                 return playlist;
@@ -101,29 +103,40 @@ export function usePlaylist() {
     const createNewPlaylist = () => {
         const name = prompt("ชื่อเพลย์ลิสต์ใหม่:");
         if (!name || !name.trim()) return;
+        createPlaylistWithName(name);
+    };
 
+    const createPlaylistWithName = (name: string) => {
+        const cleanName = name.trim();
+        if (!cleanName) return null;
+
+        const newId = Math.random().toString(36).substring(2, 9);
         const newPlaylist: PlaylistItem = {
-            id: Math.random().toString(36).substring(2, 9),
-            name: name.trim(),
+            id: newId,
+            name: cleanName,
             songs: []
         };
         setPlaylists(prev => [...prev, newPlaylist]);
         setActivePlaylistId(newPlaylist.id);
         setCurrent(0);
+        return newId;
     };
 
-    const deletePlaylist = (id: string) => {
+    const deletePlaylist = (id: string, onDeleted?: (wasPlaying: boolean) => void) => {
         if (playlists.length <= 1) {
             alert("คุณต้องมีอย่างน้อยหนึ่งเพลย์ลิสต์");
             return;
         }
         if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบเพลย์ลิสต์นี้?")) {
+            const wasPlaying = playingPlaylistId === id;
+            if (onDeleted) onDeleted(wasPlaying);
+
             setPlaylists(prev => {
                 const newPlaylists = prev.filter(p => p.id !== id);
                 if (activePlaylistId === id) {
                     setActivePlaylistId(newPlaylists[0].id);
                 }
-                if (playingPlaylistId === id) {
+                if (wasPlaying) {
                     setPlayingPlaylistId(newPlaylists[0].id);
                     setCurrent(0);
                 }
@@ -151,7 +164,7 @@ export function usePlaylist() {
             return;
         }
 
-        updateActivePlaylistSongs((prevSongs: Song[]) => {
+        updatePlaylistSongs(activePlaylistId, (prevSongs: Song[]) => {
             const newSongs = [...prevSongs];
             const draggedSong = newSongs[draggedIndex];
 
@@ -183,9 +196,11 @@ export function usePlaylist() {
 
     const addSong = async (
         url: string,
-        onSuccess?: (id: string, isFirstSong: boolean) => void
+        onSuccess?: (id: string, isFirstSong: boolean) => void,
+        targetPlaylistId?: string
     ) => {
-        if (!activePlaylist) return;
+        const resolvedPlaylistId = targetPlaylistId || activePlaylistId;
+        if (!resolvedPlaylistId) return;
 
         const id = extractVideoId(url);
         if (!id) return alert("Invalid YouTube URL");
@@ -205,7 +220,7 @@ export function usePlaylist() {
 
             let isFirstSong = false;
 
-            updateActivePlaylistSongs((prevSongs: Song[]) => {
+            updatePlaylistSongs(resolvedPlaylistId, (prevSongs: Song[]) => {
                 const newSongs = [...prevSongs, newSong];
                 isFirstSong = prevSongs.length === 0;
                 return newSongs;
@@ -236,7 +251,7 @@ export function usePlaylist() {
             onDelete(index === current);
         }
 
-        updateActivePlaylistSongs((prevSongs: Song[]) => {
+        updatePlaylistSongs(activePlaylistId, (prevSongs: Song[]) => {
             const newSongs = prevSongs.filter((_, idx) => idx !== index);
 
             // Only adjust 'current' if we are deleting from the currently playing playlist
@@ -256,7 +271,7 @@ export function usePlaylist() {
 
     const clearAllSongs = () => {
         if (confirm(`ต้องการจะลบเพลงทั้งหมดในเพลย์ลิสต์ "${activePlaylist?.name}" ใช่หรือไม่?`)) {
-            updateActivePlaylistSongs(() => []);
+            updatePlaylistSongs(activePlaylistId, () => []);
             setCurrent(0);
             return true; // Indicates successfully cleared
         }
@@ -271,6 +286,7 @@ export function usePlaylist() {
         playingPlaylistId,
         setPlayingPlaylistId,
         createNewPlaylist,
+        createPlaylistWithName,
         deletePlaylist,
         songs, // Songs of the visible tab
         playingSongs, // Songs of the playing tab

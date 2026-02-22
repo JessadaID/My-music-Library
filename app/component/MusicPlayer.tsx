@@ -17,6 +17,7 @@ export default function MusicPlayer() {
     playingPlaylistId,
     setPlayingPlaylistId,
     createNewPlaylist,
+    createPlaylistWithName,
     deletePlaylist,
     songs, // The songs visible in the current tab
     playingSongs, // The songs actively queued in the player
@@ -170,22 +171,55 @@ export default function MusicPlayer() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: currentQuery, songs }), // Send songs for context
+        body: JSON.stringify({ message: currentQuery, songs, playlists, chatHistory: messages }), // Send history, context, and playlists
       });
       const data = await res.json();
 
       if (data.type === "tool_call" && data.tool_calls) {
         let finalReply = "";
-        for (const tool of data.tool_calls) {
-          if (tool.name === "play_music") {
-            const { song_name, artist } = tool.arguments;
 
-            const fuse = new Fuse(songs, {
+        // Helper to find a playlist by name fuzzy search
+        const findPlaylist = (name: string) => {
+          if (!name) return null;
+          const fuse = new Fuse(playlists, { keys: ["name"], threshold: 0.4 });
+          const plResult = fuse.search(name);
+          return plResult.length > 0 ? plResult[0].item : null;
+        };
+
+        for (const tool of data.tool_calls) {
+          if (tool.name === "create_playlist") {
+            const { playlist_name } = tool.arguments;
+            const newId = createPlaylistWithName(playlist_name);
+            if (newId) {
+              finalReply += `✨ สร้างเพลย์ลิสต์ "${playlist_name}" เรียบร้อยแล้ว\n`;
+            } else {
+              finalReply += `❌ ไม่สามารถสร้างเพลย์ลิสต์ได้\n`;
+            }
+          } else if (tool.name === "switch_playlist") {
+            const { playlist_name } = tool.arguments;
+            const targetPlaylist = findPlaylist(playlist_name);
+            if (targetPlaylist) {
+              setActivePlaylistId(targetPlaylist.id);
+              finalReply += `🔀 สลับไปยังเพลย์ลิสต์ "${targetPlaylist.name}"\n`;
+            } else {
+              finalReply += `❌ ไม่พบเพลย์ลิสต์ชื่อ "${playlist_name}"\n`;
+            }
+          } else if (tool.name === "play_music") {
+            const { song_name, artist, target_playlist_name } = tool.arguments;
+
+            let targetPlaylistContext = activePlaylist;
+            if (target_playlist_name) {
+              const found = findPlaylist(target_playlist_name);
+              if (found) targetPlaylistContext = found;
+            }
+
+            const fuse = new Fuse(targetPlaylistContext?.songs || [], {
               keys: ["title"],
               threshold: 0.5,
               ignoreLocation: true,
               useExtendedSearch: true,
             });
+
             // Try to search with artist and song, or just song if fails
             let searchResult = fuse.search(`${song_name} ${artist || ''}`);
             if (searchResult.length === 0 && artist) {
@@ -196,22 +230,45 @@ export default function MusicPlayer() {
             if (searchResult.length > 0) {
               const bestMatchIndex = searchResult[0].refIndex;
               const bestMatch = searchResult[0].item;
-              finalReply += `🎵 พบเพลง: ${bestMatch.title} ในคิว ดำเนินการเล่น\n`;
-              playSong(bestMatchIndex, activePlaylistId);
+              finalReply += `🎵 พบเพลง: ${bestMatch.title} ใน "${targetPlaylistContext?.name}" ดำเนินการเล่น\n`;
+              playSong(bestMatchIndex, targetPlaylistContext?.id);
             } else {
-              finalReply += `❌ ขออภัย ไม่พบเพลง ${song_name} ในคิว (Playlist)\n`;
+              finalReply += `❌ ขออภัย ไม่พบเพลง ${song_name} ใน "${targetPlaylistContext?.name}"\n`;
             }
           } else if (tool.name === "search_and_add_youtube_song") {
-            const { song_name, artist, youtube_id, youtube_title } = tool.arguments;
+            const { song_name, artist, youtube_id, youtube_title, target_playlist_name } = tool.arguments;
+
+            let targetPlaylistId = activePlaylistId;
+            let playlistNameForReply = activePlaylist?.name;
+
+            if (target_playlist_name) {
+              let found = findPlaylist(target_playlist_name);
+              if (!found) {
+                // Create if it doesn't exist
+                const newId = createPlaylistWithName(target_playlist_name);
+                targetPlaylistId = newId || activePlaylistId;
+                playlistNameForReply = target_playlist_name;
+                finalReply += `✨ แอบสร้างเพลย์ลิสต์ "${target_playlist_name}" ให้ใหม่ด้วยนะ\n`;
+              } else {
+                targetPlaylistId = found.id;
+                playlistNameForReply = found.name;
+              }
+            }
+
             if (youtube_id) {
-              finalReply += `▶️ กำลังเพิ่มเพลง ${youtube_title || song_name} ลงคิวและเล่น\n`;
-              addSong(`https://youtube.com/watch?v=${youtube_id}`, (id) => {
-                const newIndex = songs.length; // It will be added to the end
-                setTimeout(() => {
-                  loadVideo(id);
-                  setCurrent(newIndex);
-                }, 500);
-              });
+              finalReply += `▶️ กำลังเพิ่มเพลง ${youtube_title || song_name} ลงใน "${playlistNameForReply}"\n`;
+              addSong(`https://youtube.com/watch?v=${youtube_id}`, (id, isFirstSong) => {
+                if (targetPlaylistId === playingPlaylistId) {
+                  const newIndex = playlists.find(p => p.id === targetPlaylistId)?.songs.length || 0;
+                  setTimeout(() => {
+                    loadVideo(id);
+                    setCurrent(newIndex);
+                  }, 500);
+                } else if (isFirstSong && targetPlaylistId) {
+                  // Optional: auto-play if it's a brand new playlist and it's not currently playing anything else? 
+                  // Keeping simple for now, just adds to background.
+                }
+              }, targetPlaylistId);
             } else {
               finalReply += `❌ ขออภัย ไม่พบข้อมูลเพลง ${song_name} บน YouTube\n`;
             }
@@ -401,7 +458,11 @@ export default function MusicPlayer() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      deletePlaylist(playlist.id);
+                      deletePlaylist(playlist.id, (wasPlaying) => {
+                        if (wasPlaying) {
+                          stopVideo();
+                        }
+                      });
                     }}
                     className="px-2 py-2 text-sm border border-l-0 bg-red-50 text-red-600 border-primary/20 hover:bg-red-100 dark:bg-red-950/20 dark:text-red-400 dark:border-white/20 transition-all font-bold"
                     aria-label="Delete playlist"
@@ -560,6 +621,7 @@ export default function MusicPlayer() {
               <ul className="list-disc pl-5 space-y-2 text-primary dark:text-white/90">
                 <li>เล่นเพลงจากคิว: <span className="opacity-70 text-xs block mt-0.5">"เปิดเพลง Shape of you"</span></li>
                 <li>ค้นหาเพลย์ลิสต์ใหม่: <span className="opacity-70 text-xs block mt-0.5">"หาเพลง diet pepsi ให้หน่อย"</span></li>
+                <li>สร้างเพลย์ลิสต์ใหม่: <span className="opacity-70 text-xs block mt-0.5">"สร้างเพลย์ลิสต์ ชิวๆ"</span></li>
               </ul>
             </div>
           ) : (
@@ -609,6 +671,13 @@ export default function MusicPlayer() {
                 className="text-xs px-3 py-1 border border-primary dark:border-white text-primary dark:text-white hover:bg-primary hover:text-white dark:hover:bg-white dark:hover:text-primary transition-all active:scale-95 bg-transparent uppercase tracking-wider"
               >
                 เปิดเพลง...
+              </button>
+              <button
+                type="button"
+                onClick={() => setAiQuery("สร้างเพลย์ลิสต์ ")}
+                className="text-xs px-3 py-1 border border-primary dark:border-white text-primary dark:text-white hover:bg-primary hover:text-white dark:hover:bg-white dark:hover:text-primary transition-all active:scale-95 bg-transparent uppercase tracking-wider"
+              >
+                สร้างเพลย์ลิสต์...
               </button>
             </div>
 

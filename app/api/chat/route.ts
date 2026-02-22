@@ -13,7 +13,7 @@ const tools = [
         type: "function",
         function: {
             name: "play_music",
-            description: "Play a specific song from the music library",
+            description: "Play a specific song from the current library",
             parameters: {
                 type: "object",
                 properties: {
@@ -25,17 +25,20 @@ const tools = [
                         type: "string",
                         description: "The artist of the song",
                     },
+                    target_playlist_name: {
+                        type: "string",
+                        description: "Optional. The name of the playlist to play the song from. If the user doesn't specify, leave empty to use the current one.",
+                    }
                 },
                 required: ["song_name"],
             },
         }
     },
-
     {
         type: "function",
         function: {
             name: "search_and_add_youtube_song",
-            description: "Search YouTube and add a new song to the playlist when the user asks for a song that IS NOT in the current library. Do not use this if the song is already in the library.",
+            description: "Search YouTube and add a new song to the library when the user asks for a song that IS NOT currently present. Do not use this if the song is already in the library.",
             parameters: {
                 type: "object",
                 properties: {
@@ -47,8 +50,46 @@ const tools = [
                         type: "string",
                         description: "The artist of the song",
                     },
+                    target_playlist_name: {
+                        type: "string",
+                        description: "Optional. The name of the playlist to add the new song into. If it doesn't exist, it will be automatically created.",
+                    }
                 },
                 required: ["song_name"],
+            },
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "create_playlist",
+            description: "Create a new playlist",
+            parameters: {
+                type: "object",
+                properties: {
+                    playlist_name: {
+                        type: "string",
+                        description: "The name of the new playlist",
+                    }
+                },
+                required: ["playlist_name"],
+            },
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "switch_playlist",
+            description: "Switch the active visible playlist to another one",
+            parameters: {
+                type: "object",
+                properties: {
+                    playlist_name: {
+                        type: "string",
+                        description: "The name of the playlist to switch to",
+                    }
+                },
+                required: ["playlist_name"],
             },
         }
     }
@@ -56,29 +97,41 @@ const tools = [
 
 export async function POST(req: Request) {
     try {
-        const { message, songs = [] } = await req.json();
+        const { message, songs = [], playlists = [], chatHistory = [] } = await req.json();
 
         if (!message) {
             return NextResponse.json({ error: "Message is required" }, { status: 400 });
         }
 
-        const songListContext = songs.length > 0
-            ? `Current local library songs: ${songs.map((s: any) => s.title).join(", ")}.`
-            : "The local library is currently empty.";
+        let playlistContext = "The library is currently empty.";
+        if (playlists && playlists.length > 0) {
+            playlistContext = "AVAILABLE PLAYLISTS:\n";
+            for (const pl of playlists) {
+                playlistContext += `- Playlist "${pl.name}": Contains ${pl.songs.length > 0 ? pl.songs.map((s: any) => s.title).join(", ") : "no songs"}\n`;
+            }
+        }
+
+        const pastMessages = chatHistory.map((msg: any) => ({
+            role: msg.role === 'user' ? 'user' : 'assistant',
+            content: msg.content,
+        }));
 
         const messages = [
             {
                 role: "system",
-                content: `You are a helpful AI music assistant. Your job is to help users play music from their library or add new songs from YouTube. 
+                content: `You are a helpful AI music assistant. Your job is to help users manage playlists, play music from their library, or add new songs from YouTube. 
                 
-${songListContext}
+${playlistContext}
 
 Use the provided tools to perform actions based on the user's request:
-1. If the user wants to play a song, FIRST check if it exists in the 'Current local library songs'. Notes: The titles in the local library usually come from YouTube videos so they might include extra phrases like "Official Video" or the artist's channel name. If the requested song seems to match a title in the library, use the \`play_music\` tool ONLY.
-2. If the user wants to play a song that IS NOT in the current library, you MUST use the \`search_and_add_youtube_song\` tool to add it and play it. DO NOT use the \`play_music\` tool for songs that are not in the library.
+1. Playlist Management: You can create new playlists (create_playlist) or switch to different playlists (switch_playlist) if the user asks.
+2. If the user wants to play a song, FIRST check if it exists in ANY of the "AVAILABLE PLAYLISTS". If it does, use the \`play_music\` tool ONLY, optionally specifying the \`target_playlist_name\` if they asked for a specific one or if it's only in one place.
+3. If the user wants to play a song that IS NOT in any playlist, you MUST use the \`search_and_add_youtube_song\` tool to add it and play it. You can optionally pass \`target_playlist_name\` to put it in a specific playlist. If they ask to add physical to a playlist that doesn't exist yet, it'll create it for them automatically if you give the \`target_playlist_name\`.
+4. If a user asks to add a song to a specific playlist (like "add song X to playlist Y"), use \`search_and_add_youtube_song\` passing "Y" as the \`target_playlist_name\`.
 
 IMPORTANT: Do not wrap tool calls in xml or markdown. Only return the tool call.`,
             },
+            ...pastMessages,
             {
                 role: "user",
                 content: message,
@@ -152,7 +205,8 @@ IMPORTANT: Do not wrap tool calls in xml or markdown. Only return the tool call.
 
                 const match = failedGen.match(/<function=(\w+)[^\{]*(\{[\s\S]*?\})[^<]*<\/function>/i) ||
                     failedGen.match(/<tool_call>\n*{"name":\s*"([^"]+)",\s*"arguments":\s*({[^}]+})}\n*<\/tool_call>/i) ||
-                    failedGen.match(/<function=(\w+)(?:.*?|)>([\s\S]*?)<\/function>/i);
+                    failedGen.match(/<function=(\w+)(?:.*?|)>([\s\S]*?)<\/function>/i) ||
+                    failedGen.match(/<function=(\w+)\((\{[\s\S]*?\})\)<\/function>/i);
 
                 if (match) {
                     const toolName = match[1];
