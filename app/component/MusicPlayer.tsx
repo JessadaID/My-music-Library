@@ -215,14 +215,14 @@ export default function MusicPlayer() {
     <div className="flex flex-col lg:flex-row gap-6 p-4 bg-white/80 dark:bg-primary h-full max-h-screen overflow-hidden">
       {/* Music Player Section */}
       <section className="flex flex-col items-center lg:w-1/3 lg:max-w-sm shrink-0">
-        <div className="w-full max-w-xs">
-          <img
-            src={albumArt}
-            alt={songs[current]?.title || "Album Art"}
-            className="w-full aspect-square object-cover shadow-lg"
-            width={256}
-            height={256}
-          />
+        <div className="w-full max-w-xs overflow-hidden relative shadow-lg">
+          <div className="w-full aspect-video relative">
+            <img
+              src={albumArt}
+              alt={songs[current]?.title || "Album Art"}
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
 
         <div className="mt-4 text-center w-full max-w-xs">
@@ -388,12 +388,14 @@ export default function MusicPlayer() {
                 <div className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing shrink-0">
                   ⋮⋮
                 </div>
-                <img
-                  src={song.thumbnail}
-                  alt={song.title}
-                  className="w-12 h-12 object-cover shrink-0"
-                  loading="lazy"
-                />
+                <div className="w-16 h-9 overflow-hidden shrink-0 relative bg-black">
+                  <img
+                    src={song.thumbnail}
+                    alt={song.title}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="font-medium truncate ">{song.title}</div>
