@@ -4,6 +4,7 @@ import { usePlaylist, Song } from "../hooks/usePlaylist";
 import { useYouTubePlayer } from "../hooks/useYouTubePlayer";
 import { useMediaSession } from "../hooks/useMediaSession";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useChatHistory } from "../hooks/useChatHistory";
 import { Button } from "./ui/Button";
 import Fuse from "fuse.js";
 
@@ -28,9 +29,9 @@ export default function MusicPlayer() {
   );
   const [isChatOpen, setIsChatOpen] = useState(false);
 
+  const { messages, addMessage, clearHistory } = useChatHistory();
   const [aiQuery, setAiQuery] = useState("");
   const [isAiThinking, setIsAiThinking] = useState(false);
-  const [aiStatusMessage, setAiStatusMessage] = useState("");
 
   const {
     isPlayerReady,
@@ -139,22 +140,24 @@ export default function MusicPlayer() {
     e.preventDefault();
     if (!aiQuery.trim()) return;
 
+    const currentQuery = aiQuery;
+    addMessage("user", currentQuery);
     setIsAiThinking(true);
-    setAiStatusMessage("กำลังคิด...");
+    setAiQuery("");
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: aiQuery, songs }), // Send songs for context
+        body: JSON.stringify({ message: currentQuery, songs }), // Send songs for context
       });
       const data = await res.json();
 
       if (data.type === "tool_call" && data.tool_calls) {
+        let finalReply = "";
         for (const tool of data.tool_calls) {
           if (tool.name === "play_music") {
             const { song_name, artist } = tool.arguments;
-            setAiStatusMessage(`กำลังค้นหาเพลง: ${song_name} ${artist || ''}...`);
 
             const fuse = new Fuse(songs, {
               keys: ["title"],
@@ -172,42 +175,39 @@ export default function MusicPlayer() {
             if (searchResult.length > 0) {
               const bestMatchIndex = searchResult[0].refIndex;
               const bestMatch = searchResult[0].item;
-              setAiStatusMessage(`พบเพลง: ${bestMatch.title} ในคิว ดำเนินการเล่น`);
+              finalReply += `🎵 พบเพลง: ${bestMatch.title} ในคิว ดำเนินการเล่น\n`;
               playSong(bestMatchIndex);
             } else {
-              setAiStatusMessage(`ขออภัย ไม่พบเพลง ${song_name} ในคิว (Playlist)`);
+              finalReply += `❌ ขออภัย ไม่พบเพลง ${song_name} ในคิว (Playlist)\n`;
             }
           } else if (tool.name === "search_and_add_youtube_song") {
             const { song_name, artist, youtube_id, youtube_title } = tool.arguments;
             if (youtube_id) {
-              setAiStatusMessage(`กำลังค้นหาและเพิ่มเพลง: ${youtube_title || song_name}...`);
+              finalReply += `▶️ กำลังเพิ่มเพลง ${youtube_title || song_name} ลงคิวและเล่น\n`;
               addSong(`https://youtube.com/watch?v=${youtube_id}`, (id) => {
                 const newIndex = songs.length; // It will be added to the end
                 setTimeout(() => {
-                  setAiStatusMessage(`เพิ่มเพลง ${youtube_title || song_name} ลงคิวและกำลังเล่น`);
-                  // We need to wait for state to update, or just use loadVideo and let player handle it.
                   loadVideo(id);
                   setCurrent(newIndex);
                 }, 500);
               });
             } else {
-              setAiStatusMessage(`ขออภัย ไม่พบข้อมูลเพลง ${song_name} บน YouTube`);
+              finalReply += `❌ ขออภัย ไม่พบข้อมูลเพลง ${song_name} บน YouTube\n`;
             }
           }
         }
 
-        setTimeout(() => setAiStatusMessage(""), 4000);
+        if (finalReply) {
+          addMessage("assistant", finalReply.trim());
+        }
       } else {
-        setAiStatusMessage(data.content || "รับทราบครับ");
-        setTimeout(() => setAiStatusMessage(""), 4000);
+        addMessage("assistant", data.content || "รับทราบครับ");
       }
     } catch (err) {
       console.error(err);
-      setAiStatusMessage("เกิดข้อผิดพลาดในการเชื่อมต่อ AI");
-      setTimeout(() => setAiStatusMessage(""), 4000);
+      addMessage("assistant", "⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ AI");
     } finally {
       setIsAiThinking(false);
-      setAiQuery("");
     }
   };
 
@@ -463,44 +463,68 @@ export default function MusicPlayer() {
           }`}
       >
         {/* Sidebar Header */}
-        <div className="bg-primary text-white dark:bg-white dark:text-primary px-4 py-4 text-base font-bold flex items-center justify-between border-b border-primary/20 dark:border-white/20">
+        <div className="bg-primary text-white dark:bg-white dark:text-primary px-4 py-4 text-base font-bold flex items-center justify-between border-b border-primary/20 dark:border-white/20 shrink-0">
           <span className="flex items-center gap-3 uppercase tracking-wider text-sm">
             <span className="text-xl">✨</span> AI Assistant
           </span>
-          <button
-            onClick={() => setIsChatOpen(false)}
-            className="w-8 h-8 flex items-center justify-center border border-transparent hover:border-white hover:bg-white/10 dark:hover:border-primary dark:hover:bg-primary/10 transition-colors"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            {messages.length > 0 && (
+              <button
+                onClick={clearHistory}
+                className="text-xs px-2 py-1 border border-primary/20 hover:bg-white/10 transition-colors uppercase"
+              >
+                Clear
+              </button>
+            )}
+            <button
+              onClick={() => setIsChatOpen(false)}
+              className="w-8 h-8 flex items-center justify-center border border-transparent hover:border-white hover:bg-white/10 dark:hover:border-primary dark:hover:bg-primary/10 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {/* Sidebar Chat Content / History Area */}
         <div className="flex-1 p-4 overflow-y-auto w-full flex flex-col gap-4 custom-scrollbar">
-          <div className="bg-white dark:bg-primary p-4 border border-primary dark:border-white text-sm">
-            <p className="font-bold mb-3 text-primary dark:text-white flex items-center gap-2 uppercase tracking-wide">
-              <span>💡</span> ความสามารถของ AI
-            </p>
-            <ul className="list-disc pl-5 space-y-2 text-primary dark:text-white/90">
-              <li>เล่นเพลงจากคิว: <span className="opacity-70 text-xs block mt-0.5">"เปิดเพลง Shape of you"</span></li>
-              <li>ค้นหาเพลย์ลิสต์ใหม่: <span className="opacity-70 text-xs block mt-0.5">"หาเพลง diet pepsi ให้หน่อย"</span></li>
-            </ul>
-          </div>
+          {messages.length === 0 ? (
+            <div className="bg-white dark:bg-primary p-4 border border-primary dark:border-white text-sm my-auto opacity-70">
+              <p className="font-bold mb-3 text-primary dark:text-white flex items-center gap-2 uppercase tracking-wide">
+                <span>💡</span> ความสามารถของ AI
+              </p>
+              <ul className="list-disc pl-5 space-y-2 text-primary dark:text-white/90">
+                <li>เล่นเพลงจากคิว: <span className="opacity-70 text-xs block mt-0.5">"เปิดเพลง Shape of you"</span></li>
+                <li>ค้นหาเพลย์ลิสต์ใหม่: <span className="opacity-70 text-xs block mt-0.5">"หาเพลง diet pepsi ให้หน่อย"</span></li>
+              </ul>
+            </div>
+          ) : (
+            messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`p-3 text-sm flex flex-col gap-1 w-fit max-w-[90%] border ${msg.role === "user"
+                  ? "ml-auto bg-primary text-white dark:bg-white dark:text-primary border-primary dark:border-white"
+                  : "mr-auto bg-white text-primary dark:bg-primary dark:text-white border-primary dark:border-white"
+                  }`}
+              >
+                <div className="flex items-center gap-2 opacity-70 text-[10px] uppercase font-bold tracking-wider mb-1">
+                  {msg.role === "user" ? "You" : "✨ AI Assistant"}
+                </div>
+                <div className="leading-relaxed whitespace-pre-wrap font-medium">
+                  {msg.content}
+                </div>
+              </div>
+            ))
+          )}
 
-          <div className="flex-1"></div>
-
-          {/* Assistant Status Bubble */}
-          <div className={`transition-all duration-300 transform origin-bottom ${aiStatusMessage ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4 pointer-events-none'}`}>
-            <div className={`p-4 font-medium flex items-start gap-3 w-fit max-w-[95%] ml-auto border ${isAiThinking
-              ? "bg-primary text-white dark:bg-white dark:text-primary border-primary dark:border-white animate-pulse"
-              : "bg-white text-primary border-primary dark:bg-primary dark:text-white dark:border-white"
-              }`}>
-              {!isAiThinking && aiStatusMessage && <span className="mt-0.5 text-lg flex-shrink-0">✨</span>}
+          {/* Thinking Indicator */}
+          {isAiThinking && (
+            <div className={`p-4 font-medium flex items-center gap-3 w-fit max-w-[95%] mr-auto border bg-white text-primary border-primary dark:bg-primary dark:text-white dark:border-white animate-pulse`}>
+              <span className="mt-0.5 text-lg flex-shrink-0 animate-spin w-4 h-4 border-2 border-primary border-t-transparent dark:border-white dark:border-t-transparent flex items-center justify-center"></span>
               <div className="flex-1 leading-relaxed text-sm">
-                {aiStatusMessage || "พร้อมรับคำสั่ง..."}
+                กำลังประมวลผล...
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Sidebar Input Area */}
