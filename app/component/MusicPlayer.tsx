@@ -323,7 +323,7 @@ export default function MusicPlayer() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 p-4 bg-white/80 dark:bg-primary h-full max-h-screen overflow-hidden">
+    <div className="flex flex-col lg:flex-row gap-6 p-4 bg-white/80 dark:bg-primary min-h-screen lg:h-screen lg:overflow-hidden">
       {/* Music Player Section */}
       <section className="flex flex-col items-center lg:w-1/3 lg:max-w-sm shrink-0">
         <div className="w-full max-w-xs overflow-hidden relative shadow-lg">
@@ -524,7 +524,7 @@ export default function MusicPlayer() {
             </Button>
           </div>
 
-          <ul className="space-y-2 overflow-y-auto overflow-x-hidden pr-1 flex-1 lg:max-h-[500px]">
+          <ul className="space-y-2 overflow-y-auto overflow-x-hidden pr-1 flex-1 lg:max-h-none">
             {songs.map((song, idx) => (
               <li
                 key={song.id} // Changed key to song.id for better stability
