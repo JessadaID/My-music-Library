@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePlaylist, Song } from "../hooks/usePlaylist";
 import { useYouTubePlayer } from "../hooks/useYouTubePlayer";
 import { useMediaSession } from "../hooks/useMediaSession";
@@ -156,6 +156,39 @@ export default function MusicPlayer() {
     prevSong,
     nextSong,
   });
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input field
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA" ||
+        document.activeElement?.tagName === "SELECT" ||
+        (document.activeElement as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (isPlaying) {
+          handlePause();
+        } else {
+          handlePlay();
+        }
+      } else if (e.code === "ArrowLeft" && isPlayerReady) {
+        e.preventDefault();
+        seekTo(Math.max(0, progress - 5));
+      } else if (e.code === "ArrowRight" && isPlayerReady) {
+        e.preventDefault();
+        seekTo(Math.min(duration || 0, progress + 5));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isPlaying, progress, duration, isPlayerReady, handlePlay, handlePause, seekTo]);
 
   // AI Chat handler
   const handleAgentChat = async (e: React.FormEvent) => {
