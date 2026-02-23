@@ -646,7 +646,7 @@ export default function MusicPlayer() {
           {/* Thinking Indicator */}
           {isAiThinking && (
             <div className={`p-4 font-medium flex items-center gap-3 w-fit max-w-[95%] mr-auto border bg-white text-primary border-primary dark:bg-primary dark:text-white dark:border-white animate-pulse`}>
-              <span className="mt-0.5 text-lg flex-shrink-0 animate-spin w-4 h-4 border-2 border-primary border-t-transparent dark:border-white dark:border-t-transparent flex items-center justify-center"></span>
+              <span className="mt-0.5 text-lg flex-shrink-0 animate-spin w-4 h-4 border-2 rounded-full border-primary border-t-transparent dark:border-white dark:border-t-transparent flex items-center justify-center"></span>
               <div className="flex-1 leading-relaxed text-sm">
                 กำลังประมวลผล...
               </div>
