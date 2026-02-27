@@ -429,7 +429,7 @@ export default function MusicPlayer() {
       </section>
 
       {/* Playlist Management Section */}
-      <section className="flex-1 flex flex-col min-h-0">
+      <section className="flex-1 flex flex-col min-h-0 min-w-0">
         <div className="mb-4 border bg-white/80 dark:bg-primary border-primary dark:border-white">
           <div className="flex items-center justify-between px-3 py-2">
             <div>
@@ -481,11 +481,10 @@ export default function MusicPlayer() {
           )}
         </div>
 
-        <div className="mb-4 text-sm font-medium flex items-center gap-2">
-          {isPlayerReady ? <span className="flex items-center gap-1 text-green-500"><MdCheckCircle /> Ready</span> : <span className="flex items-center gap-1"><MdHourglassEmpty className="animate-spin" /> Loading...</span>}
+        <div className="mb-4 text-sm font-medium flex items-center gap-2 w-full">
+          {isPlayerReady ? <span className="flex items-center gap-1 text-green-500 shrink-0"><MdCheckCircle /> Ready</span> : <span className="flex items-center gap-1 shrink-0"><MdHourglassEmpty className="animate-spin" /> Loading...</span>}
           {playingSongs.length > 0 && ( // Changed from songs to playingSongs
-            <span>
-              {" "}
+            <span className="truncate flex-1 min-w-0">
               | Songs: {playingSongs.length} | Playing: {current + 1}/{playingSongs.length} -{" "}
               {playingSongs[current]?.title || "None"}
               {playingSongs.length === 1 && " (Repeat Mode)"}
@@ -493,7 +492,7 @@ export default function MusicPlayer() {
           )}
         </div>
 
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 min-w-0">
           {/* Playlist Tabs */}
           <div className="flex items-center gap-2 mb-4 overflow-x-auto custom-scrollbar pb-2">
             {playlists.map((playlist) => (
@@ -560,7 +559,7 @@ export default function MusicPlayer() {
                   setPlayingPlaylistId(activePlaylistId); // Set playing playlist to active playlist
                   playSong(idx, activePlaylistId); // Play the song from the active playlist
                 }}
-                className={`flex items-center gap-3 p-3 transition-colors flex-wrap sm:flex-nowrap cursor-pointer ${activePlaylistId === playingPlaylistId && idx === current
+                className={`group flex items-center gap-2 sm:gap-3 p-3 transition-colors cursor-pointer w-full max-w-full overflow-hidden flex-nowrap ${activePlaylistId === playingPlaylistId && idx === current
                   ? "bg-primary hover:bg-black hover:text-white text-white dark:bg-white/80 dark:text-primary dark:hover:bg-white dark:hover:text-primary"
                   : "bg-white/80 hover:bg-secondary hover:text-white dark:bg-primary dark:hover:bg-secondary dark:hover:text-white border-primary dark:border-white"
                   } ${draggedIndex === idx ? "opacity-50" : ""}`}
@@ -577,14 +576,14 @@ export default function MusicPlayer() {
                   />
                 </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate ">{song.title}</div>
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <div className="font-medium truncate" title={song.title}>{song.title}</div>
                   <div className="text-xs">
                     Click to play {songs.length === 1 && " • Will repeat"}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 w-full justify-end sm:w-auto sm:justify-end shrink-0">
+                <div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto">
                   {idx === current && <MdMusicNote className="text-xl" />}
 
                   <Button
