@@ -20,6 +20,7 @@ export function useYouTubePlayer(
     const [isPlaying, setIsPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [volume, setVolume] = useState(100);
 
     const songsRef = useRef(songs);
     const currentRef = useRef(current);
@@ -65,6 +66,7 @@ export function useYouTubePlayer(
             events: {
                 onReady: () => {
                     setIsPlayerReady(true);
+                    playerRef.current?.setVolume(volume);
                     const currentSongs = songsRef.current;
                     const currentIndex = currentRef.current;
                     if (currentSongs.length > 0 && currentSongs[currentIndex]) {
@@ -182,6 +184,13 @@ export function useYouTubePlayer(
         return null;
     }
 
+    const changeVolume = (level: number) => {
+        setVolume(level);
+        if (playerRef.current && isPlayerReady) {
+            playerRef.current.setVolume(level);
+        }
+    };
+
     return {
         isPlayerReady,
         isPlaying,
@@ -197,6 +206,8 @@ export function useYouTubePlayer(
         pauseVideo,
         stopVideo,
         seekTo,
-        getVideoData
+        getVideoData,
+        volume,
+        changeVolume
     };
 }

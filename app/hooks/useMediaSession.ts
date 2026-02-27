@@ -23,7 +23,7 @@ export function useMediaSession(
 
     useEffect(() => {
         if (typeof document === "undefined") return;
-        const titlePrefix = song ? (isPlaying ? "▶ " : "⏸ ") : "";
+        const titlePrefix = song ? (isPlaying ? "▶ " : "❚❚ ") : "";
         document.title = song
             ? `${titlePrefix}${song.title} — ${defaultSiteTitle}`
             : defaultSiteTitle;

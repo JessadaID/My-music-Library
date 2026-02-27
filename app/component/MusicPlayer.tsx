@@ -7,6 +7,13 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useChatHistory } from "../hooks/useChatHistory";
 import { Button } from "./ui/Button";
 import Fuse from "fuse.js";
+import {
+  MdVolumeDown, MdVolumeUp,
+  MdSkipPrevious, MdPause, MdPlayArrow, MdSkipNext,
+  MdAdd, MdClose, MdMusicNote, MdDragIndicator,
+  MdAutoAwesome, MdLightbulb, MdCheckCircle, MdHourglassEmpty,
+  MdCompareArrows, MdError
+} from "react-icons/md";
 
 export default function MusicPlayer() {
   const {
@@ -56,6 +63,8 @@ export default function MusicPlayer() {
     stopVideo,
     seekTo,
     getVideoData,
+    volume,
+    changeVolume,
   } = useYouTubePlayer(playingSongs, current, setCurrent);
 
   const albumArt =
@@ -224,18 +233,18 @@ export default function MusicPlayer() {
             const { playlist_name } = tool.arguments;
             const newId = createPlaylistWithName(playlist_name);
             if (newId) {
-              finalReply += `✨ สร้างเพลย์ลิสต์ "${playlist_name}" เรียบร้อยแล้ว\n`;
+              finalReply += `[INFO] สร้างเพลย์ลิสต์ "${playlist_name}" เรียบร้อยแล้ว\n`;
             } else {
-              finalReply += `❌ ไม่สามารถสร้างเพลย์ลิสต์ได้\n`;
+              finalReply += `[ERROR] ไม่สามารถสร้างเพลย์ลิสต์ได้\n`;
             }
           } else if (tool.name === "switch_playlist") {
             const { playlist_name } = tool.arguments;
             const targetPlaylist = findPlaylist(playlist_name);
             if (targetPlaylist) {
               setActivePlaylistId(targetPlaylist.id);
-              finalReply += `🔀 สลับไปยังเพลย์ลิสต์ "${targetPlaylist.name}"\n`;
+              finalReply += `[SWITCH] สลับไปยังเพลย์ลิสต์ "${targetPlaylist.name}"\n`;
             } else {
-              finalReply += `❌ ไม่พบเพลย์ลิสต์ชื่อ "${playlist_name}"\n`;
+              finalReply += `[ERROR] ไม่พบเพลย์ลิสต์ชื่อ "${playlist_name}"\n`;
             }
           } else if (tool.name === "play_music") {
             const { song_name, artist, target_playlist_name } = tool.arguments;
@@ -263,10 +272,10 @@ export default function MusicPlayer() {
             if (searchResult.length > 0) {
               const bestMatchIndex = searchResult[0].refIndex;
               const bestMatch = searchResult[0].item;
-              finalReply += `🎵 พบเพลง: ${bestMatch.title} ใน "${targetPlaylistContext?.name}" ดำเนินการเล่น\n`;
+              finalReply += `[MUSIC] พบเพลง: ${bestMatch.title} ใน "${targetPlaylistContext?.name}" ดำเนินการเล่น\n`;
               playSong(bestMatchIndex, targetPlaylistContext?.id);
             } else {
-              finalReply += `❌ ขออภัย ไม่พบเพลง ${song_name} ใน "${targetPlaylistContext?.name}"\n`;
+              finalReply += `[ERROR] ขออภัย ไม่พบเพลง ${song_name} ใน "${targetPlaylistContext?.name}"\n`;
             }
           } else if (tool.name === "search_and_add_youtube_song") {
             const { song_name, artist, youtube_id, youtube_title, target_playlist_name } = tool.arguments;
@@ -281,7 +290,7 @@ export default function MusicPlayer() {
                 const newId = createPlaylistWithName(target_playlist_name);
                 targetPlaylistId = newId || activePlaylistId;
                 playlistNameForReply = target_playlist_name;
-                finalReply += `✨ แอบสร้างเพลย์ลิสต์ "${target_playlist_name}" ให้ใหม่ด้วยนะ\n`;
+                finalReply += `[INFO] แอบสร้างเพลย์ลิสต์ "${target_playlist_name}" ให้ใหม่ด้วยนะ\n`;
               } else {
                 targetPlaylistId = found.id;
                 playlistNameForReply = found.name;
@@ -289,7 +298,7 @@ export default function MusicPlayer() {
             }
 
             if (youtube_id) {
-              finalReply += `▶️ กำลังเพิ่มเพลง ${youtube_title || song_name} ลงใน "${playlistNameForReply}"\n`;
+              finalReply += `[PLAY] กำลังเพิ่มเพลง ${youtube_title || song_name} ลงใน "${playlistNameForReply}"\n`;
               addSong(`https://youtube.com/watch?v=${youtube_id}`, (id, isFirstSong) => {
                 if (targetPlaylistId === playingPlaylistId) {
                   const newIndex = playlists.find(p => p.id === targetPlaylistId)?.songs.length || 0;
@@ -303,7 +312,7 @@ export default function MusicPlayer() {
                 }
               }, targetPlaylistId);
             } else {
-              finalReply += `❌ ขออภัย ไม่พบข้อมูลเพลง ${song_name} บน YouTube\n`;
+              finalReply += `[ERROR] ขออภัย ไม่พบข้อมูลเพลง ${song_name} บน YouTube\n`;
             }
           }
         }
@@ -316,7 +325,7 @@ export default function MusicPlayer() {
       }
     } catch (err) {
       console.error(err);
-      addMessage("assistant", "⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ AI");
+      addMessage("assistant", "[WARN] เกิดข้อผิดพลาดในการเชื่อมต่อ AI");
     } finally {
       setIsAiThinking(false);
     }
@@ -368,7 +377,7 @@ export default function MusicPlayer() {
               disabled={!isPlayerReady || playingSongs.length === 0}
               aria-label="Previous"
             >
-              <span aria-hidden>⏮</span>
+              <MdSkipPrevious className="text-xl" />
             </Button>
 
             {isPlaying ? (
@@ -378,7 +387,7 @@ export default function MusicPlayer() {
                 disabled={!isPlayerReady || playingSongs.length === 0}
                 aria-label="Pause"
               >
-                <span aria-hidden>⏸</span>
+                <MdPause className="text-xl" />
                 <span className="hidden lg:inline">Pause</span>
               </Button>
             ) : (
@@ -388,7 +397,7 @@ export default function MusicPlayer() {
                 disabled={!isPlayerReady || playingSongs.length === 0}
                 aria-label="Play"
               >
-                <span aria-hidden>▶</span>
+                <MdPlayArrow className="text-xl" />
                 <span className="hidden lg:inline font-medium">Play</span>
               </Button>
             )}
@@ -399,8 +408,22 @@ export default function MusicPlayer() {
               disabled={!isPlayerReady || playingSongs.length === 0}
               aria-label="Next"
             >
-              <span aria-hidden>⏭</span>
+              <MdSkipNext className="text-xl" />
             </Button>
+          </div>
+
+          <div className="flex items-center gap-2 mt-4 text-sm w-full max-w-[200px] mx-auto opacity-80 hover:opacity-100 transition-opacity">
+            <MdVolumeDown className="text-lg" />
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={volume}
+              onChange={(e) => changeVolume(parseInt(e.target.value))}
+              className="flex-1 accent-primary dark:accent-white h-1.5 cursor-pointer"
+              disabled={!isPlayerReady}
+            />
+            <MdVolumeUp className="text-xl" />
           </div>
         </div>
       </section>
@@ -458,8 +481,8 @@ export default function MusicPlayer() {
           )}
         </div>
 
-        <div className="mb-4 text-sm font-medium">
-          Player: {isPlayerReady ? "✅ Ready" : "⏳ Loading..."}
+        <div className="mb-4 text-sm font-medium flex items-center gap-2">
+          {isPlayerReady ? <span className="flex items-center gap-1 text-green-500"><MdCheckCircle /> Ready</span> : <span className="flex items-center gap-1"><MdHourglassEmpty className="animate-spin" /> Loading...</span>}
           {playingSongs.length > 0 && ( // Changed from songs to playingSongs
             <span>
               {" "}
@@ -500,7 +523,7 @@ export default function MusicPlayer() {
                     className="px-2 py-2 text-sm border border-l-0 bg-red-50 text-red-600 border-primary/20 hover:bg-red-100 dark:bg-red-950/20 dark:text-red-400 dark:border-white/20 transition-all font-bold"
                     aria-label="Delete playlist"
                   >
-                    ×
+                    <MdClose />
                   </button>
                 )}
               </div>
@@ -509,7 +532,7 @@ export default function MusicPlayer() {
               onClick={createNewPlaylist}
               className="px-3 py-2 text-sm font-bold border border-primary/20 text-primary hover:bg-primary/5 dark:border-white/20 dark:text-white dark:hover:bg-white/5 bg-white dark:bg-black transition-all shrink-0 flex items-center gap-1"
             >
-              <span>+</span> ใหม่
+              <MdAdd className="text-lg" /> ใหม่
             </button>
           </div>
 
@@ -542,8 +565,8 @@ export default function MusicPlayer() {
                   : "bg-white/80 hover:bg-secondary hover:text-white dark:bg-primary dark:hover:bg-secondary dark:hover:text-white border-primary dark:border-white"
                   } ${draggedIndex === idx ? "opacity-50" : ""}`}
               >
-                <div className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing shrink-0">
-                  ⋮⋮
+                <div className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing shrink-0 text-xl">
+                  <MdDragIndicator />
                 </div>
                 <div className="w-16 h-9 overflow-hidden shrink-0 relative bg-black">
                   <img
@@ -562,7 +585,7 @@ export default function MusicPlayer() {
                 </div>
 
                 <div className="flex items-center gap-2 w-full justify-end sm:w-auto sm:justify-end shrink-0">
-                  {idx === current && <span className="text-xl">♪</span>}
+                  {idx === current && <MdMusicNote className="text-xl" />}
 
                   <Button
                     variant="ghost"
@@ -599,7 +622,7 @@ export default function MusicPlayer() {
           onClick={() => setIsChatOpen(true)}
           className="fixed bottom-6 right-6 z-40 bg-primary text-white dark:bg-white dark:text-primary px-5 py-2 shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-3 group border border-primary/20 dark:border-white/20 hover:bg-black dark:hover:bg-gray-200"
         >
-          <span className="text-2xl animate-pulse">✨</span>
+          <MdAutoAwesome className="text-2xl animate-pulse" />
           <span className="font-bold whitespace-nowrap hidden sm:inline tracking-wide uppercase text-sm">
             AI Assistant
           </span>
@@ -623,8 +646,8 @@ export default function MusicPlayer() {
       >
         {/* Sidebar Header */}
         <div className="bg-primary text-white dark:bg-white dark:text-primary px-4 py-4 text-base font-bold flex items-center justify-between border-b border-primary/20 dark:border-white/20 shrink-0">
-          <span className="flex items-center gap-3 uppercase tracking-wider text-sm">
-            <span className="text-xl">✨</span> AI Assistant
+          <span className="flex items-center gap-2 uppercase tracking-wider text-sm">
+            <MdAutoAwesome className="text-xl" /> AI Assistant
           </span>
           <div className="flex items-center gap-2">
             {messages.length > 0 && (
@@ -639,7 +662,7 @@ export default function MusicPlayer() {
               onClick={() => setIsChatOpen(false)}
               className="w-8 h-8 flex items-center justify-center border border-transparent hover:border-white hover:bg-white/10 dark:hover:border-primary dark:hover:bg-primary/10 transition-colors"
             >
-              ✕
+              <MdClose className="text-lg" />
             </button>
           </div>
         </div>
@@ -649,7 +672,7 @@ export default function MusicPlayer() {
           {messages.length === 0 ? (
             <div className="bg-white dark:bg-primary p-4 border border-primary dark:border-white text-sm my-auto opacity-70">
               <p className="font-bold mb-3 text-primary dark:text-white flex items-center gap-2 uppercase tracking-wide">
-                <span>💡</span> ความสามารถของ AI
+                <MdLightbulb className="text-lg" /> ความสามารถของ AI
               </p>
               <ul className="list-disc pl-5 space-y-2 text-primary dark:text-white/90">
                 <li>เล่นเพลงจากคิว: <span className="opacity-70 text-xs block mt-0.5">"เปิดเพลง Shape of you"</span></li>
@@ -666,8 +689,8 @@ export default function MusicPlayer() {
                   : "mr-auto bg-white text-primary dark:bg-primary dark:text-white border-primary dark:border-white"
                   }`}
               >
-                <div className="flex items-center gap-2 opacity-70 text-[10px] uppercase font-bold tracking-wider mb-1">
-                  {msg.role === "user" ? "You" : "✨ AI Assistant"}
+                <div className="flex items-center gap-1 opacity-70 text-[10px] uppercase font-bold tracking-wider mb-1">
+                  {msg.role === "user" ? "You" : <><MdAutoAwesome /> AI Assistant</>}
                 </div>
                 <div className="leading-relaxed whitespace-pre-wrap font-medium">
                   {msg.content}
