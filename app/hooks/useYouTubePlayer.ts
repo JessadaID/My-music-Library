@@ -54,14 +54,17 @@ export function useYouTubePlayer(
     }, []);
 
     const initializePlayer = () => {
+        const origin = typeof window !== "undefined" ? window.location.origin : undefined;
         playerRef.current = new (window as any).YT.Player("player", {
-            height: "0",
-            width: "0",
+            height: "200",
+            width: "200",
+            host: "https://www.youtube-nocookie.com",
             playerVars: {
                 controls: 0,
                 autoplay: 0,
                 enablejsapi: 1,
                 rel: 0,
+                origin: origin,
             },
             events: {
                 onReady: () => {
@@ -96,6 +99,9 @@ export function useYouTubePlayer(
                 },
                 onError: (event: any) => {
                     console.error("YouTube Player Error:", event.data);
+                    // Error 150/101: Video owner does not allow embedded playback
+                    // Error 100: Video not found or removed
+                    // Error 2/5: Invalid parameter / HTML5 error
                     isAutoPlayingRef.current = false;
                     setTimeout(() => {
                         playNextSong();

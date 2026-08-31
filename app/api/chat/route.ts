@@ -158,7 +158,7 @@ IMPORTANT: Do not wrap tool calls in xml or markdown. Only return the tool call.
                     if (name === "search_and_add_youtube_song") {
                         try {
                             const ytSearch = (await import('yt-search')).default;
-                            const query = `${args.song_name} ${args.artist || ''} official music video`;
+                            const query = `${args.song_name} ${args.artist || ''} audio`;
                             const searchResult = await ytSearch(query);
 
                             if (searchResult && searchResult.videos.length > 0) {
@@ -221,7 +221,7 @@ IMPORTANT: Do not wrap tool calls in xml or markdown. Only return the tool call.
                         if (toolName === "search_and_add_youtube_song") {
                             try {
                                 const ytSearch = (await import('yt-search')).default;
-                                const query = `${parsedArgs.song_name} ${parsedArgs.artist || ''} official music video`;
+                                const query = `${parsedArgs.song_name} ${parsedArgs.artist || ''} audio`;
                                 const searchResult = await ytSearch(query);
 
                                 if (searchResult && searchResult.videos.length > 0) {

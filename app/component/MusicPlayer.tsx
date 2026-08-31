@@ -636,8 +636,8 @@ export default function MusicPlayer() {
           </div>
         </section >
 
-        <section>
-          <div id="player" style={{ display: "none" }}></div>
+        <section className="fixed -left-[9999px] -top-[9999px] pointer-events-none opacity-0" aria-hidden="true">
+          <div id="player"></div>
         </section>
 
         {/* Floating AI Chat Button */}
